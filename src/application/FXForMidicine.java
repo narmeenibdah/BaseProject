@@ -47,7 +47,6 @@ public class FXForMidicine {
 		Label lblCatId = new Label("Category ID:");
 		TextField tfCategory = new TextField();
 
-		// GridPane layout
 		GridPane grid = new GridPane();
 		grid.setHgap(10);
 		grid.setVgap(10);
@@ -147,351 +146,341 @@ public class FXForMidicine {
 		stage.setScene(new Scene(root, 420, 360));
 		stage.showAndWait();
 	}
+
 	public void deleteMedicine(TableView<Medicine> table) {
 
-	    Stage stage = new Stage();
-	    stage.setTitle("Delete Medicine");
+		Stage stage = new Stage();
+		stage.setTitle("Delete Medicine");
 
-	    TextField tfId = new TextField();
+		TextField tfId = new TextField();
 
-	    GridPane grid = new GridPane();
-	    grid.setHgap(10);
-	    grid.setVgap(10);
-	    grid.setPadding(new Insets(15));
-	    grid.addRow(0, new Label("Medicine ID:"), tfId);
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(15));
+		grid.addRow(0, new Label("Medicine ID:"), tfId);
 
-	    Button btnDelete = new Button("Delete");
-	    Button btnCancel = new Button("Cancel");
+		Button btnDelete = new Button("Delete");
+		Button btnCancel = new Button("Cancel");
 
-	    btnDelete.setStyle("-fx-background-color:#e63946; -fx-text-fill:white; -fx-font-weight:bold;");
-	    btnCancel.setStyle("-fx-background-color:#cccccc; -fx-font-weight:bold;");
+		btnDelete.setStyle("-fx-background-color:#e63946; -fx-text-fill:white; -fx-font-weight:bold;");
+		btnCancel.setStyle("-fx-background-color:#cccccc; -fx-font-weight:bold;");
 
-	    HBox actions = new HBox(10, btnDelete, btnCancel);
-	    actions.setAlignment(Pos.CENTER_RIGHT);
+		HBox actions = new HBox(10, btnDelete, btnCancel);
+		actions.setAlignment(Pos.CENTER_RIGHT);
 
-	    VBox root = new VBox(15, grid, actions);
-	    root.setPadding(new Insets(15));
+		VBox root = new VBox(15, grid, actions);
+		root.setPadding(new Insets(15));
 
-	    btnDelete.setOnAction(e -> {
-	        try {
-	            int id = Integer.parseInt(tfId.getText().trim());
-	            Connection conn = DBConnection.getConnection();
+		btnDelete.setOnAction(e -> {
+			try {
+				int id = Integer.parseInt(tfId.getText().trim());
+				Connection conn = DBConnection.getConnection();
 
-	            // 1) Check Batch
-	            PreparedStatement ch1 = conn.prepareStatement(
-	                    "SELECT COUNT(*) AS cnt FROM Batch WHERE Medicine_ID = ?");
-	            ch1.setInt(1, id);
-	            ResultSet rs1 = ch1.executeQuery();
-	            rs1.next();
-	            int batchCnt = rs1.getInt("cnt");
-	            rs1.close();
-	            ch1.close();
+				PreparedStatement ch1 = conn
+						.prepareStatement("SELECT COUNT(*) AS cnt FROM Batch WHERE Medicine_ID = ?");
+				ch1.setInt(1, id);
+				ResultSet rs1 = ch1.executeQuery();
+				rs1.next();
+				int batchCnt = rs1.getInt("cnt");
+				rs1.close();
+				ch1.close();
 
-	            if (batchCnt > 0) {
-	                conn.close();
-	                showError("Cannot delete: Medicine has Batches (" + batchCnt + ").");
-	                return;
-	            }
+				if (batchCnt > 0) {
+					conn.close();
+					showError("Cannot delete: Medicine has Batches (" + batchCnt + ").");
+					return;
+				}
 
-	            // 2) Check Sale_Item
-	            PreparedStatement ch2 = conn.prepareStatement(
-	                    "SELECT COUNT(*) AS cnt FROM Sale_Item WHERE Medicine_ID = ?");
-	            ch2.setInt(1, id);
-	            ResultSet rs2 = ch2.executeQuery();
-	            rs2.next();
-	            int saleCnt = rs2.getInt("cnt");
-	            rs2.close();
-	            ch2.close();
+				PreparedStatement ch2 = conn
+						.prepareStatement("SELECT COUNT(*) AS cnt FROM Sale_Item WHERE Medicine_ID = ?");
+				ch2.setInt(1, id);
+				ResultSet rs2 = ch2.executeQuery();
+				rs2.next();
+				int saleCnt = rs2.getInt("cnt");
+				rs2.close();
+				ch2.close();
 
-	            if (saleCnt > 0) {
-	                conn.close();
-	                showError("Cannot delete: Medicine used in Sales (" + saleCnt + ").");
-	                return;
-	            }
+				if (saleCnt > 0) {
+					conn.close();
+					showError("Cannot delete: Medicine used in Sales (" + saleCnt + ").");
+					return;
+				}
 
-	            // 3) Check Purchase_Order_Item
-	            PreparedStatement ch3 = conn.prepareStatement(
-	                    "SELECT COUNT(*) AS cnt FROM Purchase_Order_Item WHERE Medicine_ID = ?");
-	            ch3.setInt(1, id);
-	            ResultSet rs3 = ch3.executeQuery();
-	            rs3.next();
-	            int poCnt = rs3.getInt("cnt");
-	            rs3.close();
-	            ch3.close();
+				PreparedStatement ch3 = conn
+						.prepareStatement("SELECT COUNT(*) AS cnt FROM Purchase_Order_Item WHERE Medicine_ID = ?");
+				ch3.setInt(1, id);
+				ResultSet rs3 = ch3.executeQuery();
+				rs3.next();
+				int poCnt = rs3.getInt("cnt");
+				rs3.close();
+				ch3.close();
 
-	            if (poCnt > 0) {
-	                conn.close();
-	                showError("Cannot delete: Medicine used in Purchase Orders (" + poCnt + ").");
-	                return;
-	            }
+				if (poCnt > 0) {
+					conn.close();
+					showError("Cannot delete: Medicine used in Purchase Orders (" + poCnt + ").");
+					return;
+				}
 
-	            // 4) Delete Medicine
-	            PreparedStatement ps = conn.prepareStatement(
-	                    "DELETE FROM Medicine WHERE Medicine_ID = ?");
-	            ps.setInt(1, id);
-	            int rows = ps.executeUpdate();
-	            ps.close();
-	            conn.close();
+				PreparedStatement ps = conn.prepareStatement("DELETE FROM Medicine WHERE Medicine_ID = ?");
+				ps.setInt(1, id);
+				int rows = ps.executeUpdate();
+				ps.close();
+				conn.close();
 
-	            if (rows > 0) {
-	                showInfo("Medicine deleted successfully.");
-	                MedicineMng.loadMedicines(table);
-	                stage.close();
-	            } else {
-	                showError("No medicine found with this ID.");
-	            }
+				if (rows > 0) {
+					showInfo("Medicine deleted successfully.");
+					MedicineMng.loadMedicines(table);
+					stage.close();
+				} else {
+					showError("No medicine found with this ID.");
+				}
 
-	        } catch (NumberFormatException ex) {
-	            showError("Medicine ID must be a number.");
-	        } catch (Exception ex) {
-	            ex.printStackTrace();
-	            showError("Unexpected error: " + ex.getMessage());
-	        }
-	    });
+			} catch (NumberFormatException ex) {
+				showError("Medicine ID must be a number.");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				showError("Unexpected error: " + ex.getMessage());
+			}
+		});
 
-	    btnCancel.setOnAction(e -> stage.close());
+		btnCancel.setOnAction(e -> stage.close());
 
-	    stage.setScene(new Scene(root, 360, 160));
-	    stage.showAndWait();
+		stage.setScene(new Scene(root, 360, 160));
+		stage.showAndWait();
 	}
 
+	public void searchMedicine(TableView<Medicine> table) {
 
-	 public void searchMedicine(TableView<Medicine> table) {
+		Stage stagee = new Stage();
+		stagee.setTitle("Search Medicine by ID");
 
-	        Stage stagee = new Stage();
-	        stagee.setTitle("Search Medicine by ID");
+		Label lblId = new Label("Medicine ID:");
+		TextField tfId = new TextField();
 
-	        Label lblId = new Label("Medicine ID:");
-	        TextField tfId = new TextField();
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(15));
+		grid.add(lblId, 0, 0);
+		grid.add(tfId, 1, 0);
 
-	        GridPane grid = new GridPane();
-	        grid.setHgap(10);
-	        grid.setVgap(10);
-	        grid.setPadding(new Insets(15));
-	        grid.add(lblId, 0, 0);
-	        grid.add(tfId, 1, 0);
+		Button btnSearch = new Button("Search");
+		Button btnCancel = new Button("Cancel");
 
-	        Button btnSearch = new Button("Search");
-	        Button btnCancel = new Button("Cancel");
+		btnSearch.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
+		btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
 
-	        btnSearch.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
-	        btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
+		HBox actions = new HBox(10, btnSearch, btnCancel);
+		actions.setAlignment(Pos.CENTER_RIGHT);
 
-	        HBox actions = new HBox(10, btnSearch, btnCancel);
-	        actions.setAlignment(Pos.CENTER_RIGHT);
+		VBox root = new VBox(15, grid, actions);
+		root.setPadding(new Insets(15));
+		root.setStyle("-fx-background-color: #f1faee;");
 
-	        VBox root = new VBox(15, grid, actions);
-	        root.setPadding(new Insets(15));
-	        root.setStyle("-fx-background-color: #f1faee;");
+		btnSearch.setOnAction(e -> {
+			try {
+				int id = Integer.parseInt(tfId.getText().trim());
 
-	        
-	        btnSearch.setOnAction(e -> {
-	            try {
-	                int id = Integer.parseInt(tfId.getText().trim());
+				table.getItems().clear();
 
-	                table.getItems().clear();
+				Connection conn = DBConnection.getConnection();
 
-	                Connection conn = DBConnection.getConnection();
+				String sql = "SELECT m.Medicine_ID, m.Trade_Name, m.Unit, "
+						+ "m.Reorder_Level, m.Selling_Price, m.Requires_Prescription, " + "c.Name AS Category_Name "
+						+ "FROM Medicine m " + "JOIN Category c ON m.Category_ID = c.Category_ID "
+						+ "WHERE m.Medicine_ID = ?";
 
-	                String sql = "SELECT m.Medicine_ID, m.Trade_Name, m.Unit, " +
-	                             "m.Reorder_Level, m.Selling_Price, m.Requires_Prescription, " +
-	                             "c.Name AS Category_Name " +
-	                             "FROM Medicine m " +
-	                             "JOIN Category c ON m.Category_ID = c.Category_ID " +
-	                             "WHERE m.Medicine_ID = ?";
+				PreparedStatement ps = conn.prepareStatement(sql);
+				ps.setInt(1, id);
+				ResultSet rs = ps.executeQuery();
 
-	                PreparedStatement ps = conn.prepareStatement(sql);
-	                ps.setInt(1, id);
-	                ResultSet rs = ps.executeQuery();
+				if (rs.next()) {
+					Medicine med = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"),
+							rs.getString("Unit"), rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
+							rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
+					table.getItems().add(med);
+					stagee.close();
+				} else {
+					showInfo("No medicine found with this ID.");
+				}
 
-	                if (rs.next()) {
-	                    Medicine med = new Medicine(
-	                            rs.getInt("Medicine_ID"),
-	                            rs.getString("Trade_Name"),
-	                            rs.getString("Unit"),
-	                            rs.getInt("Reorder_Level"),
-	                            rs.getDouble("Selling_Price"),
-	                            rs.getBoolean("Requires_Prescription"),
-	                            rs.getString("Category_Name")
-	                    );
-	                    table.getItems().add(med);
-	                    stagee.close();
-	                } else {
-	                    showInfo("No medicine found with this ID.");
-	                }
+				rs.close();
+				ps.close();
 
-	                rs.close();
-	                ps.close();
+			} catch (NumberFormatException ex) {
+				showError("ID must be a valid number.");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				showError("Unexpected error: " + ex.getMessage());
+			}
+		});
 
-	            } catch (NumberFormatException ex) {
-	                showError("ID must be a valid number.");
-	            } catch (Exception ex) {
-	                ex.printStackTrace();
-	                showError("Unexpected error: " + ex.getMessage());
-	            }
-	        });
+		btnCancel.setOnAction(e2 -> stagee.close());
 
-	        btnCancel.setOnAction(e2 -> stagee.close());
+		stagee.setScene(new Scene(root, 360, 160));
+		stagee.showAndWait();
+	}
 
-	        stagee.setScene(new Scene(root, 360, 160));
-	        stagee.showAndWait();
-	    }
-	 public void updateMedicine(TableView<Medicine> table) {
+	public void updateMedicine(TableView<Medicine> table) {
 
-	        Stage stagee = new Stage();
-	        stagee.setTitle("Update Medicine");
+		Stage stagee = new Stage();
+		stagee.setTitle("Update Medicine");
 
-	        Label lblId    = new Label("Medicine ID:");
-	        TextField tfId = new TextField();
+		Label lblId = new Label("Medicine ID:");
+		TextField tfId = new TextField();
 
-	        Label lblName  = new Label("New Trade Name:");
-	        TextField tfName = new TextField();
+		Label lblName = new Label("New Trade Name:");
+		TextField tfName = new TextField();
 
-	        Label lblUnit  = new Label("New Unit:");
-	        TextField tfUnit = new TextField();
+		Label lblUnit = new Label("New Unit:");
+		TextField tfUnit = new TextField();
 
-	        Label lblReord = new Label("New Reorder Level:");
-	        TextField tfReorder = new TextField();
+		Label lblReord = new Label("New Reorder Level:");
+		TextField tfReorder = new TextField();
 
-	        Label lblPrice = new Label("New Selling Price:");
-	        TextField tfPrice = new TextField();
+		Label lblPrice = new Label("New Selling Price:");
+		TextField tfPrice = new TextField();
 
-	        Label lblReq   = new Label("Requires Prescription (set new):");
-	        CheckBox cbReq = new CheckBox();
+		Label lblReq = new Label("Requires Prescription (set new):");
+		CheckBox cbReq = new CheckBox();
 
-	        Label lblCatId = new Label("New Category ID:");
-	        TextField tfCategory = new TextField();
+		Label lblCatId = new Label("New Category ID:");
+		TextField tfCategory = new TextField();
 
-	        GridPane grid = new GridPane();
-	        grid.setHgap(10);
-	        grid.setVgap(10);
-	        grid.setPadding(new Insets(15));
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(15));
 
-	        grid.add(lblId,    0, 0); grid.add(tfId,       1, 0);
-	        grid.add(lblName,  0, 1); grid.add(tfName,     1, 1);
-	        grid.add(lblUnit,  0, 2); grid.add(tfUnit,     1, 2);
-	        grid.add(lblReord, 0, 3); grid.add(tfReorder,  1, 3);
-	        grid.add(lblPrice, 0, 4); grid.add(tfPrice,    1, 4);
-	        grid.add(lblReq,   0, 5); grid.add(cbReq,      1, 5);
-	        grid.add(lblCatId, 0, 6); grid.add(tfCategory, 1, 6);
+		grid.add(lblId, 0, 0);
+		grid.add(tfId, 1, 0);
+		grid.add(lblName, 0, 1);
+		grid.add(tfName, 1, 1);
+		grid.add(lblUnit, 0, 2);
+		grid.add(tfUnit, 1, 2);
+		grid.add(lblReord, 0, 3);
+		grid.add(tfReorder, 1, 3);
+		grid.add(lblPrice, 0, 4);
+		grid.add(tfPrice, 1, 4);
+		grid.add(lblReq, 0, 5);
+		grid.add(cbReq, 1, 5);
+		grid.add(lblCatId, 0, 6);
+		grid.add(tfCategory, 1, 6);
 
-	        Button btnUpdate = new Button("Update");
-	        Button btnCancel = new Button("Cancel");
+		Button btnUpdate = new Button("Update");
+		Button btnCancel = new Button("Cancel");
 
-	        btnUpdate.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
-	        btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
+		btnUpdate.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
+		btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
 
-	        HBox actions = new HBox(10, btnUpdate, btnCancel);
-	        actions.setAlignment(Pos.CENTER_RIGHT);
+		HBox actions = new HBox(10, btnUpdate, btnCancel);
+		actions.setAlignment(Pos.CENTER_RIGHT);
 
-	        VBox root = new VBox(15, grid, actions);
-	        root.setPadding(new Insets(15));
-	        root.setStyle("-fx-background-color: #f1faee;");
+		VBox root = new VBox(15, grid, actions);
+		root.setPadding(new Insets(15));
+		root.setStyle("-fx-background-color: #f1faee;");
 
-	        
-	        btnUpdate.setOnAction(e -> {
-	            try {
-	                int id = Integer.parseInt(tfId.getText().trim());
+		btnUpdate.setOnAction(e -> {
+			try {
+				int id = Integer.parseInt(tfId.getText().trim());
 
-	                String newName = tfName.getText();
-	                if (newName != null) newName = newName.trim();
+				String newName = tfName.getText();
+				if (newName != null)
+					newName = newName.trim();
 
-	                String newUnit = tfUnit.getText();
-	                if (newUnit != null) newUnit = newUnit.trim();
+				String newUnit = tfUnit.getText();
+				if (newUnit != null)
+					newUnit = newUnit.trim();
 
-	                int newReorder = -1;
-	                String reordText = tfReorder.getText();
-	                if (reordText != null && !reordText.trim().isEmpty()) {
-	                    newReorder = Integer.parseInt(reordText.trim());
-	                }
+				int newReorder = -1;
+				String reordText = tfReorder.getText();
+				if (reordText != null && !reordText.trim().isEmpty()) {
+					newReorder = Integer.parseInt(reordText.trim());
+				}
 
-	                double newPrice = -1;
-	                String priceText = tfPrice.getText();
-	                if (priceText != null && !priceText.trim().isEmpty()) {
-	                    newPrice = Double.parseDouble(priceText.trim());
-	                }
+				double newPrice = -1;
+				String priceText = tfPrice.getText();
+				if (priceText != null && !priceText.trim().isEmpty()) {
+					newPrice = Double.parseDouble(priceText.trim());
+				}
 
-	                int newCategoryId = -1;
-	                String catText = tfCategory.getText();
-	                if (catText != null && !catText.trim().isEmpty()) {
-	                    newCategoryId = Integer.parseInt(catText.trim());
-	                }
+				int newCategoryId = -1;
+				String catText = tfCategory.getText();
+				if (catText != null && !catText.trim().isEmpty()) {
+					newCategoryId = Integer.parseInt(catText.trim());
+				}
 
-	                boolean newReq = cbReq.isSelected(); 
+				boolean newReq = cbReq.isSelected();
 
-	                Connection conn = DBConnection.getConnection();
+				Connection conn = DBConnection.getConnection();
 
-	               
-	                PreparedStatement psSel = conn.prepareStatement(
-	                        "SELECT Medicine_ID, Trade_Name, Unit, Reorder_Level, " +
-	                        "Selling_Price, Requires_Prescription, Category_ID " +
-	                        "FROM Medicine WHERE Medicine_ID = ?");
-	                psSel.setInt(1, id);
-	                ResultSet rs = psSel.executeQuery();
+				PreparedStatement psSel = conn.prepareStatement("SELECT Medicine_ID, Trade_Name, Unit, Reorder_Level, "
+						+ "Selling_Price, Requires_Prescription, Category_ID " + "FROM Medicine WHERE Medicine_ID = ?");
+				psSel.setInt(1, id);
+				ResultSet rs = psSel.executeQuery();
 
-	                if (!rs.next()) {
-	                    showError("Medicine not found with this ID.");
-	                    rs.close();
-	                    psSel.close();
-	                    return;
-	                }
+				if (!rs.next()) {
+					showError("Medicine not found with this ID.");
+					rs.close();
+					psSel.close();
+					return;
+				}
 
-	                String oldName      = rs.getString("Trade_Name");
-	                String oldUnit      = rs.getString("Unit");
-	                int oldReorder      = rs.getInt("Reorder_Level");
-	                double oldPrice     = rs.getDouble("Selling_Price");
-	                boolean oldReq      = rs.getBoolean("Requires_Prescription");
-	                int oldCategoryId   = rs.getInt("Category_ID");
+				String oldName = rs.getString("Trade_Name");
+				String oldUnit = rs.getString("Unit");
+				int oldReorder = rs.getInt("Reorder_Level");
+				double oldPrice = rs.getDouble("Selling_Price");
+				boolean oldReq = rs.getBoolean("Requires_Prescription");
+				int oldCategoryId = rs.getInt("Category_ID");
 
-	                rs.close();
-	                psSel.close();
+				rs.close();
+				psSel.close();
 
-	                
-	                String finalName      = (newName != null && !newName.isEmpty()) ? newName : oldName;
-	                String finalUnit      = (newUnit != null && !newUnit.isEmpty()) ? newUnit : oldUnit;
-	                int finalReorder      = (newReorder != -1) ? newReorder : oldReorder;
-	                double finalPrice     = (newPrice != -1) ? newPrice : oldPrice;
-	                int finalCategoryId   = (newCategoryId != -1) ? newCategoryId : oldCategoryId;
-	                boolean finalReq      = cbReq.isFocused() ? newReq : oldReq;
-	               
-	                PreparedStatement psUp = conn.prepareStatement(
-	                        "UPDATE Medicine SET Trade_Name = ?, Unit = ?, Reorder_Level = ?, " +
-	                        "Selling_Price = ?, Requires_Prescription = ?, Category_ID = ? " +
-	                        "WHERE Medicine_ID = ?");
+				String finalName = (newName != null && !newName.isEmpty()) ? newName : oldName;
+				String finalUnit = (newUnit != null && !newUnit.isEmpty()) ? newUnit : oldUnit;
+				int finalReorder = (newReorder != -1) ? newReorder : oldReorder;
+				double finalPrice = (newPrice != -1) ? newPrice : oldPrice;
+				int finalCategoryId = (newCategoryId != -1) ? newCategoryId : oldCategoryId;
+				boolean finalReq = cbReq.isFocused() ? newReq : oldReq;
 
-	                psUp.setString(1, finalName);
-	                psUp.setString(2, finalUnit);
-	                psUp.setInt(3, finalReorder);
-	                psUp.setDouble(4, finalPrice);
-	                psUp.setBoolean(5, finalReq);
-	                psUp.setInt(6, finalCategoryId);
-	                psUp.setInt(7, id);
+				PreparedStatement psUp = conn
+						.prepareStatement("UPDATE Medicine SET Trade_Name = ?, Unit = ?, Reorder_Level = ?, "
+								+ "Selling_Price = ?, Requires_Prescription = ?, Category_ID = ? "
+								+ "WHERE Medicine_ID = ?");
 
-	                int rows = psUp.executeUpdate();
-	                psUp.close();
+				psUp.setString(1, finalName);
+				psUp.setString(2, finalUnit);
+				psUp.setInt(3, finalReorder);
+				psUp.setDouble(4, finalPrice);
+				psUp.setBoolean(5, finalReq);
+				psUp.setInt(6, finalCategoryId);
+				psUp.setInt(7, id);
 
-	                if (rows > 0) {
-	                    showInfo("Medicine updated successfully.");
-	                    MedicineMng.loadMedicines(table);
-	                    stagee.close();
-	                } else {
-	                    showError("Update failed. No rows affected.");
-	                }
+				int rows = psUp.executeUpdate();
+				psUp.close();
 
-	            } catch (NumberFormatException ex) {
-	                showError("ID, Reorder Level, Price, Category ID must be valid numbers.");
-	            } catch (Exception ex) {
-	                ex.printStackTrace();
-	                showError("Unexpected error: " + ex.getMessage());
-	            }
-	        });
+				if (rows > 0) {
+					showInfo("Medicine updated successfully.");
+					MedicineMng.loadMedicines(table);
+					stagee.close();
+				} else {
+					showError("Update failed. No rows affected.");
+				}
 
-	        btnCancel.setOnAction(e2 -> stagee.close());
+			} catch (NumberFormatException ex) {
+				showError("ID, Reorder Level, Price, Category ID must be valid numbers.");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				showError("Unexpected error: " + ex.getMessage());
+			}
+		});
 
-	        stagee.setScene(new Scene(root, 480, 330));
-	        stagee.showAndWait();
-	    }
-	
+		btnCancel.setOnAction(e2 -> stagee.close());
+
+		stagee.setScene(new Scene(root, 480, 330));
+		stagee.showAndWait();
+	}
 
 	private void showError(String msg) {
 		Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);

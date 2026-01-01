@@ -6,12 +6,15 @@ public class Employee {
 	private String name;
 	private String role;
 	private double salary;
-
-	public Employee(int employeeId, String name, String role, double salary) {
+	private String branchName;
+	
+	
+	public Employee(int employeeId, String name, String role, double salary, String branchName) {
 		this.employeeId = employeeId;
 		this.name = name;
 		this.role = role;
 		this.salary = salary;
+		this.branchName = branchName;
 	}
 
 	public int getEmployeeId() {
@@ -28,5 +31,10 @@ public class Employee {
 
 	public double getSalary() {
 		return salary;
+	}
+
+	
+	public String getBranchName() {
+		return branchName;
 	}
 }

@@ -6,6 +6,8 @@ public class Supplier {
 	private String name;
 	private String phone;
 	private String email;
+	
+	private int totalQuantity;
 
 	public Supplier(int supplierId, String name, String phone, String email) {
 		this.supplierId = supplierId;
@@ -45,4 +47,14 @@ public class Supplier {
 	public void setEmail(String email) {
 		this.email = email;
 	}
+
+	public int getTotalQuantity() {
+		return totalQuantity;
+	}
+
+	public void setTotalQuantity(int totalQuantity) {
+		this.totalQuantity = totalQuantity;
+	}
+	
+	
 }

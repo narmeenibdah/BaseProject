@@ -20,147 +20,173 @@ import javafx.scene.text.FontWeight;
 
 public class SupplierMng {
 
-    public static Parent getView() {
+	public static Parent getView() {
 
-        TableView<Supplier> table = new TableView<>();
+		TableView<Supplier> table = new TableView<>();
 
-        TableColumn<Supplier, Integer> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("supplierId"));
+		TableColumn<Supplier, Integer> idCol = new TableColumn<>("ID");
+		idCol.setCellValueFactory(new PropertyValueFactory<>("supplierId"));
 
-        TableColumn<Supplier, String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+		TableColumn<Supplier, String> nameCol = new TableColumn<>("Name");
+		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-        TableColumn<Supplier, String> phoneCol = new TableColumn<>("Phone");
-        phoneCol.setCellValueFactory(new PropertyValueFactory<>("phone"));
+		TableColumn<Supplier, String> phoneCol = new TableColumn<>("Phone");
+		phoneCol.setCellValueFactory(new PropertyValueFactory<>("phone"));
 
-        TableColumn<Supplier, String> emailCol = new TableColumn<>("Email");
-        emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
+		TableColumn<Supplier, String> emailCol = new TableColumn<>("Email");
+		emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
 
-        table.getColumns().addAll(idCol, nameCol, phoneCol, emailCol);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+		TableColumn<Supplier, Integer> qtyCol = new TableColumn<>("Total Qty");
+		qtyCol.setCellValueFactory(new PropertyValueFactory<>("totalQuantity"));
 
-        Label title = new Label("Suppliers - Management");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 26));
+		table.getColumns().addAll(idCol, nameCol, phoneCol, emailCol, qtyCol);
+		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        Button btnAdd = new Button("Add");
-        Button btnDelete = new Button("Delete");
-        Button btnSearch = new Button("Search");
-        Button btnUpdate = new Button("Update");
-        Button btnAll = new Button("All Suppliers");
+		Label title = new Label("Suppliers - Management");
+		title.setFont(Font.font("Arial", FontWeight.BOLD, 26));
 
-        // ✅ Query 5 button (واضح للمستخدم)
-        Button btnThisMonth = new Button("Suppliers with Purchase Orders This Month");
+		Button btnAdd = new Button("Add");
+		Button btnDelete = new Button("Delete");
+		Button btnSearch = new Button("Search");
+		Button btnUpdate = new Button("Update");
+		Button btnAll = new Button("All Suppliers");
 
-        String style = "-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;";
-        btnAdd.setStyle(style);
-        btnDelete.setStyle(style);
-        btnSearch.setStyle(style);
-        btnUpdate.setStyle(style);
-        btnAll.setStyle(style);
-        btnThisMonth.setStyle(style);
+		Button btnThisMonth = new Button("Suppliers with Purchase Orders This Month");
 
-        FXForSupplier fx = new FXForSupplier();
+		Button btnTop5 = new Button("Top 5 Suppliers (2025)");
 
-        btnAdd.setOnAction(e -> fx.addSupplier(table));
-        btnDelete.setOnAction(e -> fx.deleteSupplier(table));
+		String style = "-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;";
+		btnAdd.setStyle(style);
+		btnDelete.setStyle(style);
+		btnSearch.setStyle(style);
+		btnUpdate.setStyle(style);
+		btnAll.setStyle(style);
+		btnThisMonth.setStyle(style);
 
-        // ✅ مهم: FXForSupplier عندك اسمها searchSupplierByName
-        btnSearch.setOnAction(e -> fx.searchSupplierByName(table));
+		btnTop5.setStyle(style);
 
-        btnUpdate.setOnAction(e -> fx.updateSupplier(table));
-        btnAll.setOnAction(e -> loadSuppliers(table));
+		FXForSupplier fx = new FXForSupplier();
 
-        // ✅ Query 5
-        btnThisMonth.setOnAction(e -> loadSuppliersThisMonth(table));
+		btnAdd.setOnAction(e -> fx.addSupplier(table));
+		btnDelete.setOnAction(e -> fx.deleteSupplier(table));
 
-        HBox buttons = new HBox(10, btnAdd, btnDelete, btnSearch, btnUpdate, btnAll, btnThisMonth);
-        buttons.setAlignment(Pos.CENTER);
+		btnSearch.setOnAction(e -> fx.searchSupplierByName(table));
 
-        VBox root = new VBox(15, title, buttons, table);
-        root.setPadding(new Insets(15));
-        root.setAlignment(Pos.TOP_CENTER);
-        root.setStyle("-fx-background-color:#d8f3dc;");
+		btnUpdate.setOnAction(e -> fx.updateSupplier(table));
+		btnAll.setOnAction(e -> loadSuppliers(table));
 
-        loadSuppliers(table);
-        return root;
-    }
+		btnThisMonth.setOnAction(e -> loadSuppliersThisMonth(table));
 
-    // ================= ALL SUPPLIERS =================
-    public static void loadSuppliers(TableView<Supplier> table) {
-        table.getItems().clear();
+		btnTop5.setOnAction(e -> loadTopSuppliersCurrentYear(table));
 
-        String sql = "SELECT Supplier_ID, Name, Phone, Email FROM Supplier";
+		HBox buttons = new HBox(10, btnAdd, btnDelete, btnSearch, btnUpdate, btnAll, btnThisMonth, btnTop5);
 
-        try (Connection conn = DBConnection.getConnection()) {
-            if (conn == null) return;
+		buttons.setAlignment(Pos.CENTER);
 
-            try (PreparedStatement ps = conn.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
+		VBox root = new VBox(15, title, buttons, table);
+		root.setPadding(new Insets(15));
+		root.setAlignment(Pos.TOP_CENTER);
+		root.setStyle("-fx-background-color:#d8f3dc;");
 
-                while (rs.next()) {
-                    Supplier s = new Supplier(
-                            rs.getInt("Supplier_ID"),
-                            rs.getString("Name"),
-                            rs.getString("Phone"),
-                            rs.getString("Email")
-                    );
-                    table.getItems().add(s);
-                }
-            }
+		loadSuppliers(table);
+		return root;
+	}
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, "Failed to load suppliers.").show();
-        }
-    }
+	public static void loadSuppliers(TableView<Supplier> table) {
+		table.getItems().clear();
 
-    // ✅ Alias عشان أي كود ثاني بينادي loadAllSuppliers ما يضرب
-    public static void loadAllSuppliers(TableView<Supplier> table) {
-        loadSuppliers(table);
-    }
+		String sql = "SELECT Supplier_ID, Name, Phone, Email FROM Supplier";
 
-    // ================= QUERY 5 =================
-    // Suppliers involved in purchase orders during the current month
-    public static void loadSuppliersThisMonth(TableView<Supplier> table) {
-        table.getItems().clear();
+		try (Connection conn = DBConnection.getConnection()) {
+			if (conn == null)
+				return;
 
-        String sql =
-            "SELECT DISTINCT s.Supplier_ID, s.Name, s.Phone, s.Email " +
-            "FROM Supplier s " +
-            "JOIN Purchase_Order po ON po.Supplier_ID = s.Supplier_ID " +
-            "WHERE MONTH(po.Date) = MONTH(CURDATE()) " +
-            "AND YEAR(po.Date) = YEAR(CURDATE())";
+			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
-        try (Connection conn = DBConnection.getConnection()) {
-            if (conn == null) return;
+				while (rs.next()) {
+					Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
+							rs.getString("Email"));
+					table.getItems().add(s);
+				}
+			}
 
-            try (PreparedStatement ps = conn.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			new Alert(Alert.AlertType.ERROR, "Failed to load suppliers.").show();
+		}
+	}
 
-                while (rs.next()) {
-                    Supplier s = new Supplier(
-                            rs.getInt("Supplier_ID"),
-                            rs.getString("Name"),
-                            rs.getString("Phone"),
-                            rs.getString("Email")
-                    );
-                    table.getItems().add(s);
-                }
-            }
+	public static void loadAllSuppliers(TableView<Supplier> table) {
+		loadSuppliers(table);
+	}
 
-            if (table.getItems().isEmpty()) {
-                new Alert(
-                    Alert.AlertType.INFORMATION,
-                    "There are no suppliers with purchase orders in the current month."
-                ).show();
-            }
+	public static void loadSuppliersThisMonth(TableView<Supplier> table) {
+		table.getItems().clear();
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            new Alert(
-                Alert.AlertType.ERROR,
-                "Failed to load suppliers with purchase orders for the current month."
-            ).show();
-        }
-    }
+		String sql = "SELECT DISTINCT s.Supplier_ID, s.Name, s.Phone, s.Email " + "FROM Supplier s "
+				+ "JOIN Purchase_Order po ON po.Supplier_ID = s.Supplier_ID "
+				+ "WHERE MONTH(po.Date) = MONTH(CURDATE()) " + "AND YEAR(po.Date) = YEAR(CURDATE())";
+
+		try (Connection conn = DBConnection.getConnection()) {
+			if (conn == null)
+				return;
+
+			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+				while (rs.next()) {
+					Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
+							rs.getString("Email"));
+					table.getItems().add(s);
+				}
+			}
+
+			if (table.getItems().isEmpty()) {
+				new Alert(Alert.AlertType.INFORMATION,
+						"There are no suppliers with purchase orders in the current month.").show();
+			}
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			new Alert(Alert.AlertType.ERROR, "Failed to load suppliers with purchase orders for the current month.")
+					.show();
+		}
+	}
+
+	public static void loadTopSuppliersCurrentYear(TableView<Supplier> table) {
+		table.getItems().clear();
+
+		String sql = "SELECT s.Supplier_ID, s.Name, s.Phone, s.Email, " + "       SUM(poi.Quantity) AS Total_Quantity "
+				+ "FROM Supplier s " + "JOIN Purchase_Order po ON po.Supplier_ID = s.Supplier_ID "
+				+ "JOIN Purchase_Order_Item poi ON poi.PO_ID = po.PO_ID " + "WHERE po.Date >= DATE '2025-01-01' "
+				+ "  AND po.Date <= DATE '2025-12-31' " + "GROUP BY s.Supplier_ID, s.Name, s.Phone, s.Email "
+				+ "ORDER BY Total_Quantity DESC";
+
+		try (Connection conn = DBConnection.getConnection()) {
+			if (conn == null)
+				return;
+
+			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+				int count = 0;
+				while (rs.next() && count < 5) {
+					Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
+							rs.getString("Email"));
+
+					s.setTotalQuantity(rs.getInt("Total_Quantity"));
+
+					table.getItems().add(s);
+					count++;
+				}
+			}
+
+			if (table.getItems().isEmpty()) {
+				new Alert(Alert.AlertType.INFORMATION, "No supplier quantities found for the year 2025.").show();
+			}
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			new Alert(Alert.AlertType.ERROR, "Failed to load top suppliers for the year 2025.").show();
+		}
+
+	}
 }

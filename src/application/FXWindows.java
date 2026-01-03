@@ -42,8 +42,18 @@ public class FXWindows {
 		Tab tab8 = new Tab("Sale Items");
 		tab8.setClosable(false);
 		tab8.setContent(SaleItemsMng.getView());
+		
+		Tab tab16 = new Tab("Regular Customers");
+		tab16.setClosable(false);
+		tab16.setContent(CustomerMng.getView());
+		Tab tab18 = new Tab("Employee Sales");
+		tab18.setContent(EmployeeSalesPeriodMng.getView());
+		Tab tab10 = new Tab("Top Selling Medicines");
+		tab10.setContent(TopSellingMedicinesMng.getView());
+	
 
-		tabPane.getTabs().addAll(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8);
+
+		tabPane.getTabs().addAll(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8,tab16,tab18,tab10);
 
 
 		

@@ -37,4 +37,9 @@ public class Employee {
 	public String getBranchName() {
 		return branchName;
 	}
+	@Override
+	public String toString() {
+	    return employeeId + " - " + name;
+	}
+
 }

@@ -327,7 +327,7 @@ public class FXForMedicine {
 	            try {
 	                if (conn != null) conn.close();
 	            } catch (Exception ex) {
-	                // ignore
+	               
 	            }
 	        }
 	    });
@@ -463,7 +463,7 @@ public class FXForMedicine {
 	            double finalPrice = (newPrice != -1) ? newPrice : oldPrice;
 	            int finalCategoryId = (newCategoryId != -1) ? newCategoryId : oldCategoryId;
 
-	            // Important fix: always take checkbox value here (do NOT set it back to oldReq)
+	           
 	            boolean finalReq = newReq;
 
 	            PreparedStatement psUp = conn.prepareStatement(
@@ -500,7 +500,7 @@ public class FXForMedicine {
 	            try {
 	                if (conn != null) conn.close();
 	            } catch (Exception ex) {
-	                // ignore
+	                
 	            }
 	        }
 	    });

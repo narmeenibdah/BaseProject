@@ -8,6 +8,7 @@ public class Batch {
 	private double cost;
 	private String medicineName;
 	private String warehouseName;
+	private int daysRemaining;
 
 	public Batch(int batchId, String batchNumber, String expiryDate, int quantity, double cost, String medicineName,
 			String warehouseName) {
@@ -18,6 +19,19 @@ public class Batch {
 		this.cost = cost;
 		this.medicineName = medicineName;
 		this.warehouseName = warehouseName;
+	}
+
+	public Batch(int batchId, String batchNumber, String expiryDate, int quantity, double cost, String medicineName,
+			String warehouseName, int daysRemaining) {
+		super();
+		this.batchId = batchId;
+		this.batchNumber = batchNumber;
+		this.expiryDate = expiryDate;
+		this.quantity = quantity;
+		this.cost = cost;
+		this.medicineName = medicineName;
+		this.warehouseName = warehouseName;
+		this.daysRemaining = daysRemaining;
 	}
 
 	public int getBatchId() {
@@ -47,4 +61,13 @@ public class Batch {
 	public String getWarehouseName() {
 		return warehouseName;
 	}
+
+	public int getDaysRemaining() {
+		return daysRemaining;
+	}
+
+	public void setDaysRemaining(int daysRemaining) {
+		this.daysRemaining = daysRemaining;
+	}
+
 }

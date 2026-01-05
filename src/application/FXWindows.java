@@ -61,7 +61,10 @@ public class FXWindows {
 		tabStock.setClosable(false);
 		tabStock.setContent(WarehouseStockMng.getView());
 
-		
+		Tab tab13 = new Tab("Stock Movements");
+		tab13.setContent(StockMovementMng.getView());
+
+
 
 
 		
@@ -69,7 +72,7 @@ public class FXWindows {
 	
 
 
-		tabPane.getTabs().addAll(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8,tab9,tab10,tab11, tab12, tabStock);
+		tabPane.getTabs().addAll(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8,tab9,tab10,tab11, tab12, tabStock,tab13);
 
 
 		

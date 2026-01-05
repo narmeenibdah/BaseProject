@@ -9,7 +9,7 @@ public class DBConnection {
         try {
             String url  = "jdbc:mysql://localhost:3306/birzeitPharmacy"; 
             String user = "root";
-            String pass = "1230778HibaAhmad"; 
+            String pass = "admin"; 
 
             return DriverManager.getConnection(url, user, pass);
         } catch (Exception e) {

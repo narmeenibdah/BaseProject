@@ -3,6 +3,7 @@ package application;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -92,27 +93,49 @@ public class SupplierMng {
 		return root;
 	}
 
-	public static void loadSuppliers(TableView<Supplier> table) {
+	public static void loadSuppliers(TableView<Supplier> table) {// 4
 		table.getItems().clear();
 
 		String sql = "SELECT Supplier_ID, Name, Phone, Email FROM Supplier";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
+			}
 
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
 
-				while (rs.next()) {
-					Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
-							rs.getString("Email"));
-					table.getItems().add(s);
-				}
+			while (rs.next()) {
+				Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
+						rs.getString("Email"));
+				table.getItems().add(s);
 			}
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			new Alert(Alert.AlertType.ERROR, "Failed to load suppliers.").show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
 	}
 
@@ -120,24 +143,39 @@ public class SupplierMng {
 		loadSuppliers(table);
 	}
 
-	public static void loadSuppliersThisMonth(TableView<Supplier> table) {
+	public static void loadSuppliersThisMonth(TableView<Supplier> table) {// 5
 		table.getItems().clear();
 
+		LocalDate now = LocalDate.now();
+		LocalDate startDate = now.withDayOfMonth(1);
+		LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+
+		String startDT = startDate.toString() + " 00:00:00";
+		String endDT = endDate.toString() + " 23:59:59";
+
 		String sql = "SELECT DISTINCT s.Supplier_ID, s.Name, s.Phone, s.Email " + "FROM Supplier s "
-				+ "JOIN Purchase_Order po ON po.Supplier_ID = s.Supplier_ID "
-				+ "WHERE MONTH(po.Date) = MONTH(CURDATE()) " + "AND YEAR(po.Date) = YEAR(CURDATE())";
+				+ "JOIN Purchase_Order po ON po.Supplier_ID = s.Supplier_ID " + "WHERE po.Date BETWEEN ? AND ?";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
+			}
 
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, startDT);
+			ps.setString(2, endDT);
 
-				while (rs.next()) {
-					Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
-							rs.getString("Email"));
-					table.getItems().add(s);
-				}
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
+						rs.getString("Email"));
+				table.getItems().add(s);
 			}
 
 			if (table.getItems().isEmpty()) {
@@ -149,44 +187,100 @@ public class SupplierMng {
 			ex.printStackTrace();
 			new Alert(Alert.AlertType.ERROR, "Failed to load suppliers with purchase orders for the current month.")
 					.show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
 	}
 
-	public static void loadTopSuppliersCurrentYear(TableView<Supplier> table) {
+	public static void loadTopSuppliersCurrentYear(TableView<Supplier> table) {// 20
 		table.getItems().clear();
+
+		LocalDate now = LocalDate.now();
+		LocalDate startDate = LocalDate.of(now.getYear(), 1, 1);
+		LocalDate endDate = LocalDate.of(now.getYear(), 12, 31);
+
+		String startDT = startDate.toString() + " 00:00:00";
+		String endDT = endDate.toString() + " 23:59:59";
 
 		String sql = "SELECT s.Supplier_ID, s.Name, s.Phone, s.Email, " + "       SUM(poi.Quantity) AS Total_Quantity "
 				+ "FROM Supplier s " + "JOIN Purchase_Order po ON po.Supplier_ID = s.Supplier_ID "
-				+ "JOIN Purchase_Order_Item poi ON poi.PO_ID = po.PO_ID " + "WHERE po.Date >= DATE '2025-01-01' "
-				+ "  AND po.Date <= DATE '2025-12-31' " + "GROUP BY s.Supplier_ID, s.Name, s.Phone, s.Email "
-				+ "ORDER BY Total_Quantity DESC";
+				+ "JOIN Purchase_Order_Item poi ON poi.PO_ID = po.PO_ID " + "WHERE po.Date BETWEEN ? AND ? "
+				+ "GROUP BY s.Supplier_ID, s.Name, s.Phone, s.Email " + "ORDER BY Total_Quantity DESC";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
+			}
 
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, startDT);
+			ps.setString(2, endDT);
 
-				int count = 0;
-				while (rs.next() && count < 5) {
-					Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
-							rs.getString("Email"));
+			rs = ps.executeQuery();
 
-					s.setTotalQuantity(rs.getInt("Total_Quantity"));
+			int count = 0;
+			while (rs.next() && count < 5) {
+				Supplier s = new Supplier(rs.getInt("Supplier_ID"), rs.getString("Name"), rs.getString("Phone"),
+						rs.getString("Email"));
 
-					table.getItems().add(s);
-					count++;
+				Object obj = rs.getObject("Total_Quantity");
+				int tq = 0;
+				if (obj != null) {
+					if (obj instanceof Number) {
+						tq = ((Number) obj).intValue();
+					} else {
+						tq = Integer.parseInt(obj.toString());
+					}
 				}
+				s.setTotalQuantity(tq);
+
+				table.getItems().add(s);
+				count++;
 			}
 
 			if (table.getItems().isEmpty()) {
-				new Alert(Alert.AlertType.INFORMATION, "No supplier quantities found for the year 2025.").show();
+				new Alert(Alert.AlertType.INFORMATION, "No supplier quantities found for the current year.").show();
 			}
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			new Alert(Alert.AlertType.ERROR, "Failed to load top suppliers for the year 2025.").show();
+			new Alert(Alert.AlertType.ERROR, "Failed to load top suppliers for the current year.").show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
-
 	}
+
 }

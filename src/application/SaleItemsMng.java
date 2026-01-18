@@ -54,7 +54,7 @@ public class SaleItemsMng {
 		table.getColumns().addAll(saleCol, medIdCol, medNameCol, batchCol, qtyCol, priceCol);
 		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-		btnShow.setOnAction(e -> {
+		btnShow.setOnAction(e -> {// 9
 			table.getItems().clear();
 
 			int saleId;
@@ -70,17 +70,25 @@ public class SaleItemsMng {
 					+ "JOIN Medicine m ON m.Medicine_ID = si.Medicine_ID " + "WHERE si.Sale_ID = ? "
 					+ "ORDER BY m.Trade_Name";
 
-			try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs = null;
 
+			try {
+				conn = DBConnection.getConnection();
+				if (conn == null) {
+					return;
+				}
+
+				ps = conn.prepareStatement(sql);
 				ps.setInt(1, saleId);
 
-				try (ResultSet rs = ps.executeQuery()) {
-					while (rs.next()) {
-						table.getItems()
-								.add(new SaleItem(rs.getInt("Sale_ID"), rs.getInt("Medicine_ID"),
-										rs.getString("Medicine_Name"), rs.getInt("Batch_ID"), rs.getInt("Quantity"),
-										rs.getDouble("Unit_Price")));
-					}
+				rs = ps.executeQuery();
+				while (rs.next()) {
+					SaleItem item = new SaleItem(rs.getInt("Sale_ID"), rs.getInt("Medicine_ID"),
+							rs.getString("Medicine_Name"), rs.getInt("Batch_ID"), rs.getInt("Quantity"),
+							rs.getDouble("Unit_Price"));
+					table.getItems().add(item);
 				}
 
 				if (table.getItems().isEmpty()) {
@@ -90,7 +98,24 @@ public class SaleItemsMng {
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				showError("Failed to load sale items.");
+			} finally {
+				try {
+					if (rs != null)
+						rs.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (ps != null)
+						ps.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (conn != null)
+						conn.close();
+				} catch (Exception ex) {
+				}
 			}
+
 		});
 
 		VBox root = new VBox(15, title, top, table);

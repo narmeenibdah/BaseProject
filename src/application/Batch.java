@@ -8,7 +8,7 @@ public class Batch {
 	private double cost;
 	private String medicineName;
 	private String warehouseName;
-	private int daysRemaining;
+	private Integer daysRemaining;
 
 	public Batch(int batchId, String batchNumber, String expiryDate, int quantity, double cost, String medicineName,
 			String warehouseName) {
@@ -19,10 +19,12 @@ public class Batch {
 		this.cost = cost;
 		this.medicineName = medicineName;
 		this.warehouseName = warehouseName;
+		this.daysRemaining = null;
+
 	}
 
 	public Batch(int batchId, String batchNumber, String expiryDate, int quantity, double cost, String medicineName,
-			String warehouseName, int daysRemaining) {
+			String warehouseName, Integer daysRemaining) {
 		super();
 		this.batchId = batchId;
 		this.batchNumber = batchNumber;
@@ -62,11 +64,11 @@ public class Batch {
 		return warehouseName;
 	}
 
-	public int getDaysRemaining() {
+	public Integer getDaysRemaining() {
 		return daysRemaining;
 	}
 
-	public void setDaysRemaining(int daysRemaining) {
+	public void setDaysRemaining(Integer daysRemaining) {
 		this.daysRemaining = daysRemaining;
 	}
 

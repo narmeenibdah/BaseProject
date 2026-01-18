@@ -93,47 +93,81 @@ public class MonthlyTotalsMng {
 		BorderPane root = new BorderPane(content);
 		root.setStyle("-fx-background-color:#d8f3dc;");
 
-		btnCalc.setOnAction(e -> {
+		btnCalc.setOnAction(e -> {// 11
+
+			LocalDate noww = LocalDate.now();
+
+			LocalDate startDate = noww.withDayOfMonth(1);
+			LocalDate endDate = noww.withDayOfMonth(noww.lengthOfMonth());
+
+			String startDT = startDate.toString() + " 00:00:00";
+			String endDT = endDate.toString() + " 23:59:59";
 
 			String sql = "SELECT " + " (SELECT SUM(si.Quantity * si.Unit_Price) " + "  FROM Sale s "
-					+ "  JOIN Sale_Item si ON si.Sale_ID = s.Sale_ID " + "  WHERE YEAR(s.Sale_Date)=YEAR(CURDATE()) "
-					+ "    AND MONTH(s.Sale_Date)=MONTH(CURDATE())) AS totalSales, "
+					+ "  JOIN Sale_Item si ON si.Sale_ID = s.Sale_ID "
+					+ "  WHERE s.Sale_Date BETWEEN ? AND ?) AS totalSales, "
 					+ " (SELECT SUM(poi.Quantity * poi.Unit_Price) " + "  FROM Purchase_Order po "
 					+ "  JOIN Purchase_Order_Item poi ON poi.PO_ID = po.PO_ID "
-					+ "  WHERE YEAR(po.Date)=YEAR(CURDATE()) "
-					+ "    AND MONTH(po.Date)=MONTH(CURDATE())) AS totalPurchases";
+					+ "  WHERE po.Date BETWEEN ? AND ?) AS totalPurchases";
 
-			try (Connection conn = DBConnection.getConnection();
-					PreparedStatement ps = conn.prepareStatement(sql);
-					ResultSet rs = ps.executeQuery()) {
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+
+			try {
+				conn = DBConnection.getConnection();
+				if (conn == null) {
+					return;
+				}
+
+				ps = conn.prepareStatement(sql);
+
+				ps.setString(1, startDT);
+				ps.setString(2, endDT);
+
+				ps.setString(3, startDT);
+				ps.setString(4, endDT);
+
+				rs = ps.executeQuery();
 
 				if (rs.next()) {
 
-					double totalSales;
-					double totalPurch;
+					double totalSales = 0.0;
+					double totalPurch = 0.0;
 
 					Object salesObj = rs.getObject("totalSales");
-					if (salesObj == null) {
-						totalSales = 0.0;
-					} else {
+					if (salesObj != null) {
 						totalSales = rs.getDouble("totalSales");
 					}
 
 					Object purchObj = rs.getObject("totalPurchases");
-					if (purchObj == null) {
-						totalPurch = 0.0;
-					} else {
+					if (purchObj != null) {
 						totalPurch = rs.getDouble("totalPurchases");
 					}
 
 					salesValue.setText(String.valueOf(totalSales));
 					purchValue.setText(String.valueOf(totalPurch));
-
 				}
 
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				showError("Failed to run Query 11: " + ex.getMessage());
+			} finally {
+				try {
+					if (rs != null)
+						rs.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (ps != null)
+						ps.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (conn != null)
+						conn.close();
+				} catch (Exception ex) {
+				}
 			}
 		});
 

@@ -2,9 +2,9 @@ package application;
 
 public class StockMovementView {
 
-	private String movementType; // IN / OUT
+	private String movementType;
 	private String movementDate;
-	private int referenceId; // PO_ID أو Sale_ID
+	private int referenceId; 
 	private int quantity;
 
 	public StockMovementView(String movementType, String movementDate, int referenceId, int quantity) {

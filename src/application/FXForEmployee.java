@@ -22,108 +22,107 @@ public class FXForEmployee {
 
 	public void addEmployee(TableView<Employee> table) {
 
-	    Stage stage = new Stage();
-	    stage.setTitle("Add Employee");
+		Stage stage = new Stage();
+		stage.setTitle("Add Employee");
 
-	    Label lblName = new Label("Name:");
-	    TextField tfName = new TextField();
+		Label lblName = new Label("Name:");
+		TextField tfName = new TextField();
 
-	    Label lblSalary = new Label("Salary:");
-	    TextField tfSalary = new TextField();
+		Label lblSalary = new Label("Salary:");
+		TextField tfSalary = new TextField();
 
-	    Label lblRole = new Label("Role:");
-	    TextField tfRole = new TextField();
+		Label lblRole = new Label("Role:");
+		TextField tfRole = new TextField();
 
-	    Label lblBranch = new Label("Branch ID:");
-	    TextField tfBranch = new TextField();
+		Label lblBranch = new Label("Branch ID:");
+		TextField tfBranch = new TextField();
 
-	    GridPane grid = new GridPane();
-	    grid.setHgap(10);
-	    grid.setVgap(10);
-	    grid.setPadding(new Insets(15));
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(15));
 
-	    grid.add(lblName, 0, 0);
-	    grid.add(tfName, 1, 0);
+		grid.add(lblName, 0, 0);
+		grid.add(tfName, 1, 0);
 
-	    grid.add(lblSalary, 0, 1);
-	    grid.add(tfSalary, 1, 1);
+		grid.add(lblSalary, 0, 1);
+		grid.add(tfSalary, 1, 1);
 
-	    grid.add(lblRole, 0, 2);
-	    grid.add(tfRole, 1, 2);
+		grid.add(lblRole, 0, 2);
+		grid.add(tfRole, 1, 2);
 
-	    grid.add(lblBranch, 0, 3);
-	    grid.add(tfBranch, 1, 3);
+		grid.add(lblBranch, 0, 3);
+		grid.add(tfBranch, 1, 3);
 
-	    Button btnAdd = new Button("Add");
-	    Button btnCancel = new Button("Cancel");
+		Button btnAdd = new Button("Add");
+		Button btnCancel = new Button("Cancel");
 
-	    btnAdd.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
-	    btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
+		btnAdd.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
+		btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
 
-	    HBox actions = new HBox(10, btnAdd, btnCancel);
-	    actions.setAlignment(Pos.CENTER_RIGHT);
+		HBox actions = new HBox(10, btnAdd, btnCancel);
+		actions.setAlignment(Pos.CENTER_RIGHT);
 
-	    VBox root = new VBox(15, grid, actions);
-	    root.setPadding(new Insets(15));
-	    root.setStyle("-fx-background-color: #f1faee;");
+		VBox root = new VBox(15, grid, actions);
+		root.setPadding(new Insets(15));
+		root.setStyle("-fx-background-color: #f1faee;");
 
-	    btnAdd.setOnAction(e -> {
-	        try {
-	            String name = tfName.getText().trim();
-	            String role = tfRole.getText().trim();
-	            String salaryTxt = tfSalary.getText().trim();
-	            String branchTxt = tfBranch.getText().trim();
+		btnAdd.setOnAction(e -> {
+			try {
+				String name = tfName.getText().trim();
+				String role = tfRole.getText().trim();
+				String salaryTxt = tfSalary.getText().trim();
+				String branchTxt = tfBranch.getText().trim();
 
-	            if (name.isEmpty() || salaryTxt.isEmpty() || branchTxt.isEmpty()) {
-	                showError("Name, Salary, and Branch ID are required.");
-	                return;
-	            }
+				if (name.isEmpty() || salaryTxt.isEmpty() || branchTxt.isEmpty()) {
+					showError("Name, Salary, and Branch ID are required.");
+					return;
+				}
 
-	            double salary = Double.parseDouble(salaryTxt);
-	            int branchId = Integer.parseInt(branchTxt);
+				double salary = Double.parseDouble(salaryTxt);
+				int branchId = Integer.parseInt(branchTxt);
 
-	            if (salary < 0) {
-	                showError("Salary must be >= 0.");
-	                return;
-	            }
+				if (salary < 0) {
+					showError("Salary must be >= 0.");
+					return;
+				}
 
-	            String sql =
-	                "INSERT INTO Employee (Name, Salary, Role, Branch_ID) VALUES (?, ?, ?, ?)";
+				String sql = "INSERT INTO Employee (Name, Salary, Role, Branch_ID) VALUES (?, ?, ?, ?)";
 
-	            try (Connection conn = DBConnection.getConnection()) {
-	                if (conn == null) return;
+				try (Connection conn = DBConnection.getConnection()) {
+					if (conn == null)
+						return;
 
-	                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-	                    ps.setString(1, name);
-	                    ps.setDouble(2, salary);
-	                    ps.setString(3, role.isEmpty() ? null : role);
-	                    ps.setInt(4, branchId);
+					try (PreparedStatement ps = conn.prepareStatement(sql)) {
+						ps.setString(1, name);
+						ps.setDouble(2, salary);
+						ps.setString(3, role.isEmpty() ? null : role);
+						ps.setInt(4, branchId);
 
-	                    int rows = ps.executeUpdate();
-	                    if (rows > 0) {
-	                        showInfo("Employee added successfully.");
-	                        EmployeeMng.loadEmployees(table);
-	                        stage.close();
-	                    } else {
-	                        showError("Insert failed.");
-	                    }
-	                }
-	            }
+						int rows = ps.executeUpdate();
+						if (rows > 0) {
+							showInfo("Employee added successfully.");
+							EmployeeMng.loadEmployees(table);
+							stage.close();
+						} else {
+							showError("Insert failed.");
+						}
+					}
+				}
 
-	        } catch (NumberFormatException ex) {
-	            showError("Salary and Branch ID must be valid numbers.");
-	        } catch (Exception ex) {
-	            ex.printStackTrace();
-	            showError("Unexpected error: " + ex.getMessage());
-	        }
-	    });
+			} catch (NumberFormatException ex) {
+				showError("Salary and Branch ID must be valid numbers.");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				showError("Unexpected error: " + ex.getMessage());
+			}
+		});
 
-	    btnCancel.setOnAction(e2 -> stage.close());
+		btnCancel.setOnAction(e2 -> stage.close());
 
-	    stage.setScene(new Scene(root, 420, 260));
-	    stage.showAndWait();
+		stage.setScene(new Scene(root, 420, 260));
+		stage.showAndWait();
 	}
-
 
 	public void deleteEmployee(TableView<Employee> table) {
 
@@ -151,46 +150,97 @@ public class FXForEmployee {
 
 		VBox root = new VBox(15, grid, actions);
 		root.setPadding(new Insets(15));
+		root.setStyle("-fx-background-color:#f1faee;");
 
 		btnDelete.setOnAction(e -> {
+
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+
 			try {
-				int id = Integer.parseInt(tfId.getText().trim());
-
-				Connection conn = DBConnection.getConnection();
-
-				PreparedStatement ch = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM Sale WHERE Employee_ID = ?");
-				ch.setInt(1, id);
-				ResultSet rs = ch.executeQuery();
-				rs.next();
-				int saleCnt = rs.getInt("cnt");
-				rs.close();
-				ch.close();
-
-				if (saleCnt > 0) {
-					conn.close();
-					showError("Cannot delete: Employee is linked to Sales (" + saleCnt + ").");
+				String text = tfId.getText();
+				if (text == null || text.trim().isEmpty()) {
+					showError("Please enter an Employee ID.");
 					return;
 				}
 
-				PreparedStatement ps = conn.prepareStatement("DELETE FROM Employee WHERE Employee_ID = ?");
+				int id = Integer.parseInt(text.trim());
+
+				conn = DBConnection.getConnection();
+				if (conn == null) {
+					showError("Cannot connect to the database right now. Please try again.");
+					return;
+				}
+
+				// وجود employee
+				ps = conn.prepareStatement("SELECT 1 FROM Employee WHERE Employee_ID = ?");
+				ps.setInt(1, id);
+				rs = ps.executeQuery();
+				if (!rs.next()) {
+					showInfo("No employee found with ID = " + id + ".");
+					return;
+				}
+				rs.close();
+				ps.close();
+
+				// check sales
+				ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM Sale WHERE Employee_ID = ?");
+				ps.setInt(1, id);
+				rs = ps.executeQuery();
+				rs.next();
+				int saleCnt = rs.getInt("cnt");
+				rs.close();
+				ps.close();
+
+				if (saleCnt > 0) {
+					showError("Sorry, this employee cannot be deleted.\n\n" + "They are linked to Sales (" + saleCnt
+							+ " record(s)).\n" + "Reason: Deleting them would break the foreign key relationship.");
+					return;
+				}
+
+				Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+						"Are you sure you want to delete Employee ID = " + id + " ?", ButtonType.YES, ButtonType.NO);
+				confirm.setHeaderText(null);
+
+				ButtonType res = confirm.showAndWait().orElse(ButtonType.NO);
+				if (res != ButtonType.YES)
+					return;
+
+				ps = conn.prepareStatement("DELETE FROM Employee WHERE Employee_ID = ?");
 				ps.setInt(1, id);
 				int rows = ps.executeUpdate();
 				ps.close();
-				conn.close();
 
 				if (rows > 0) {
 					showInfo("Employee deleted successfully.");
 					EmployeeMng.loadEmployees(table);
 					stage.close();
 				} else {
-					showError("No employee found with this ID.");
+					showError("Delete failed. Please try again.");
 				}
 
 			} catch (NumberFormatException ex) {
-				showError("Employee ID must be a number.");
+				showError("Employee ID must be a valid number.");
 			} catch (Exception ex) {
 				ex.printStackTrace();
-				showError("Unexpected error: " + ex.getMessage());
+				showError("Unexpected error happened.\nDetails: " + ex.getMessage());
+			} finally {
+				try {
+					if (rs != null)
+						rs.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (ps != null)
+						ps.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (conn != null)
+						conn.close();
+				} catch (Exception ex) {
+				}
 			}
 		});
 
@@ -330,82 +380,75 @@ public class FXForEmployee {
 
 	public void searchEmployee(TableView<Employee> table) {
 
-	    Stage stage = new Stage();
-	    stage.setTitle("Search Employee by ID");
+		Stage stage = new Stage();
+		stage.setTitle("Search Employee by ID");
 
-	    Label lblId = new Label("Employee ID:");
-	    TextField tfId = new TextField();
+		Label lblId = new Label("Employee ID:");
+		TextField tfId = new TextField();
 
-	    GridPane grid = new GridPane();
-	    grid.setHgap(10);
-	    grid.setVgap(10);
-	    grid.setPadding(new Insets(15));
-	    grid.add(lblId, 0, 0);
-	    grid.add(tfId, 1, 0);
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(15));
+		grid.add(lblId, 0, 0);
+		grid.add(tfId, 1, 0);
 
-	    Button btnSearch = new Button("Search");
-	    Button btnCancel = new Button("Cancel");
+		Button btnSearch = new Button("Search");
+		Button btnCancel = new Button("Cancel");
 
-	    btnSearch.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
-	    btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
+		btnSearch.setStyle("-fx-background-color: #52b788; -fx-text-fill: white; -fx-font-weight: bold;");
+		btnCancel.setStyle("-fx-background-color: #cccccc; -fx-font-weight: bold;");
 
-	    HBox actions = new HBox(10, btnSearch, btnCancel);
-	    actions.setAlignment(Pos.CENTER_RIGHT);
+		HBox actions = new HBox(10, btnSearch, btnCancel);
+		actions.setAlignment(Pos.CENTER_RIGHT);
 
-	    VBox root = new VBox(15, grid, actions);
-	    root.setPadding(new Insets(15));
-	    root.setStyle("-fx-background-color: #f1faee;");
+		VBox root = new VBox(15, grid, actions);
+		root.setPadding(new Insets(15));
+		root.setStyle("-fx-background-color: #f1faee;");
 
-	    btnSearch.setOnAction(e -> {
+		btnSearch.setOnAction(e -> {
 
-	        try {
-	            int id = Integer.parseInt(tfId.getText().trim());
-	            table.getItems().clear();
+			try {
+				int id = Integer.parseInt(tfId.getText().trim());
+				table.getItems().clear();
 
-	            String sql =
-	                "SELECT e.Employee_ID, e.Name, e.Role, e.Salary, b.Branch_name AS Branch_Name " +
-	                "FROM Employee e " +
-	                "LEFT JOIN Branch b ON e.Branch_ID = b.Branch_ID " +
-	                "WHERE e.Employee_ID = ?";
+				String sql = "SELECT e.Employee_ID, e.Name, e.Role, e.Salary, b.Branch_name AS Branch_Name "
+						+ "FROM Employee e " + "LEFT JOIN Branch b ON e.Branch_ID = b.Branch_ID "
+						+ "WHERE e.Employee_ID = ?";
 
-	            try (Connection conn = DBConnection.getConnection()) {
-	                if (conn == null) return;
+				try (Connection conn = DBConnection.getConnection()) {
+					if (conn == null)
+						return;
 
-	                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-	                    ps.setInt(1, id);
+					try (PreparedStatement ps = conn.prepareStatement(sql)) {
+						ps.setInt(1, id);
 
-	                    try (ResultSet rs = ps.executeQuery()) {
-	                        if (rs.next()) {
-	                            Employee emp = new Employee(
-	                                rs.getInt("Employee_ID"),
-	                                rs.getString("Name"),
-	                                rs.getString("Role"),
-	                                rs.getDouble("Salary"),
-	                                rs.getString("Branch_Name") // ممكن تكون null إذا ما مربوط
-	                            );
-	                            table.getItems().add(emp);
-	                            stage.close();
-	                        } else {
-	                            showInfo("No employee found with this ID.");
-	                        }
-	                    }
-	                }
-	            }
+						try (ResultSet rs = ps.executeQuery()) {
+							if (rs.next()) {
+								Employee emp = new Employee(rs.getInt("Employee_ID"), rs.getString("Name"),
+										rs.getString("Role"), rs.getDouble("Salary"), rs.getString("Branch_Name"));
+								table.getItems().add(emp);
+								stage.close();
+							} else {
+								showInfo("No employee found with this ID.");
+							}
+						}
+					}
+				}
 
-	        } catch (NumberFormatException ex) {
-	            showError("Employee ID must be a valid number.");
-	        } catch (Exception ex) {
-	            ex.printStackTrace();
-	            showError("Unexpected error: " + ex.getMessage());
-	        }
-	    });
+			} catch (NumberFormatException ex) {
+				showError("Employee ID must be a valid number.");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				showError("Unexpected error: " + ex.getMessage());
+			}
+		});
 
-	    btnCancel.setOnAction(e2 -> stage.close());
+		btnCancel.setOnAction(e2 -> stage.close());
 
-	    stage.setScene(new Scene(root, 360, 170));
-	    stage.showAndWait();
+		stage.setScene(new Scene(root, 360, 170));
+		stage.showAndWait();
 	}
-
 
 	private void showError(String msg) {
 		Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);

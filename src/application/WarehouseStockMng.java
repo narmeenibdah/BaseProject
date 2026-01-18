@@ -59,27 +59,46 @@ public class WarehouseStockMng {
 		return root;
 	}
 
-	public static void loadStockReport(TableView<MedicineWarehouseStock> table) {
+	public static void loadStockReport(TableView<MedicineWarehouseStock> table) {// 14
 		table.getItems().clear();
 
 		String sql = "SELECT " + "  m.Medicine_ID, m.Trade_Name AS Medicine_Name, "
-				+ "  w.Warehouse_ID, w.Name AS Warehouse_Name, " + "  IFNULL( ( " + "     SELECT SUM(b.Quantity) "
-				+ "     FROM Batch b " + "     WHERE b.Medicine_ID = m.Medicine_ID "
-				+ "       AND b.Warehouse_ID = w.Warehouse_ID " + "  ), 0) AS Available_Quantity " + "FROM Medicine m "
-				+ "JOIN Warehouse w " + "ORDER BY m.Trade_Name, w.Name";
+				+ "  w.Warehouse_ID, w.Name AS Warehouse_Name, " + "  (SELECT SUM(b.Quantity) " + "   FROM Batch b "
+				+ "   WHERE b.Medicine_ID = m.Medicine_ID "
+				+ "     AND b.Warehouse_ID = w.Warehouse_ID) AS Available_Quantity " + "FROM Medicine m, Warehouse w "
+				+ "ORDER BY m.Trade_Name, w.Name";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
+			}
 
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
 
-				while (rs.next()) {
-					MedicineWarehouseStock row = new MedicineWarehouseStock(rs.getInt("Medicine_ID"),
-							rs.getString("Medicine_Name"), rs.getInt("Warehouse_ID"), rs.getString("Warehouse_Name"),
-							rs.getInt("Available_Quantity"));
-					table.getItems().add(row);
+			while (rs.next()) {
+
+				Object obj = rs.getObject("Available_Quantity");
+				int available = 0;
+
+				if (obj != null) {
+					if (obj instanceof Number) {
+						available = ((Number) obj).intValue();
+					} else {
+						available = Integer.parseInt(obj.toString());
+					}
 				}
+
+				MedicineWarehouseStock row = new MedicineWarehouseStock(rs.getInt("Medicine_ID"),
+						rs.getString("Medicine_Name"), rs.getInt("Warehouse_ID"), rs.getString("Warehouse_Name"),
+						available);
+
+				table.getItems().add(row);
 			}
 
 			if (table.getItems().isEmpty()) {
@@ -89,6 +108,22 @@ public class WarehouseStockMng {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			showError("Failed to load Stock by Warehouse (Query 14).");
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
 	}
 

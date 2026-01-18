@@ -97,132 +97,265 @@ public class MedicineMng {
 		return root;
 	}
 
-	public static void loadMedicines(TableView<Medicine> table) {
+	public static void loadMedicines(TableView<Medicine> table) { // Query 1
 		table.getItems().clear();
 
 		String sql = "SELECT m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "       m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
-				+ "       IFNULL(SUM(b.Quantity),0) AS Total_Quantity " + "FROM Medicine m "
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
+				+ "SUM(b.Quantity) AS Total_Quantity " + "FROM Medicine m "
 				+ "JOIN Category c ON m.Category_ID = c.Category_ID "
 				+ "LEFT JOIN Batch b ON b.Medicine_ID = m.Medicine_ID "
 				+ "GROUP BY m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "         m.Selling_Price, m.Requires_Prescription, c.Name";
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
-
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-
-				while (rs.next()) {
-					Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"),
-							rs.getString("Unit"), rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
-							rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
-					m.setTotalQuantity(rs.getInt("Total_Quantity"));
-					table.getItems().add(m);
-				}
 			}
+
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"), rs.getString("Unit"),
+						rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
+						rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
+
+				Object obj = rs.getObject("Total_Quantity");
+				int tq = 0;
+
+				if (obj != null) {
+					if (obj instanceof Number) {
+						tq = ((Number) obj).intValue();
+					} else {
+						tq = Integer.parseInt(obj.toString());
+					}
+				}
+
+				m.setTotalQuantity(tq);
+				table.getItems().add(m);
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+			}
 		}
 	}
 
-	public static void loadLowStockMedicines(TableView<Medicine> table) {
+	public static void loadLowStockMedicines(TableView<Medicine> table) { // Query 2
 		table.getItems().clear();
 
-		// improved: LEFT JOIN so medicines with 0 batches can appear as low stock too
 		String sql = "SELECT m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "       m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
-				+ "       IFNULL(SUM(b.Quantity),0) AS Total_Quantity " + "FROM Medicine m "
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
+				+ "SUM(b.Quantity) AS Total_Quantity " + "FROM Medicine m "
 				+ "JOIN Category c ON m.Category_ID = c.Category_ID "
 				+ "LEFT JOIN Batch b ON b.Medicine_ID = m.Medicine_ID "
 				+ "GROUP BY m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "         m.Selling_Price, m.Requires_Prescription, c.Name "
-				+ "HAVING IFNULL(SUM(b.Quantity),0) < m.Reorder_Level";
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name "
+				+ "HAVING SUM(b.Quantity) < m.Reorder_Level OR SUM(b.Quantity) IS NULL";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
-
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-
-				while (rs.next()) {
-					Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"),
-							rs.getString("Unit"), rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
-							rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
-					m.setTotalQuantity(rs.getInt("Total_Quantity"));
-					table.getItems().add(m);
-				}
 			}
+
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"), rs.getString("Unit"),
+						rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
+						rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
+
+				Object obj = rs.getObject("Total_Quantity");
+				int tq = 0;
+
+				if (obj != null) {
+					if (obj instanceof Number) {
+						tq = ((Number) obj).intValue();
+					} else {
+						tq = Integer.parseInt(obj.toString());
+					}
+				}
+
+				m.setTotalQuantity(tq);
+				table.getItems().add(m);
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+			}
 		}
 	}
 
-	public static void loadPrescriptionMedicines(TableView<Medicine> table) {
+	public static void loadPrescriptionMedicines(TableView<Medicine> table) { // Query 15
 		table.getItems().clear();
 
 		String sql = "SELECT m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "       m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
-				+ "       IFNULL(SUM(b.Quantity), 0) AS Total_Quantity " + "FROM Medicine m "
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
+				+ "SUM(b.Quantity) AS Total_Quantity " + "FROM Medicine m "
 				+ "JOIN Category c ON m.Category_ID = c.Category_ID "
 				+ "LEFT JOIN Batch b ON b.Medicine_ID = m.Medicine_ID " + "WHERE m.Requires_Prescription = TRUE "
 				+ "GROUP BY m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "         m.Selling_Price, m.Requires_Prescription, c.Name";
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
-
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-
-				while (rs.next()) {
-					Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"),
-							rs.getString("Unit"), rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
-							rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
-					m.setTotalQuantity(rs.getInt("Total_Quantity"));
-					table.getItems().add(m);
-				}
 			}
+
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"), rs.getString("Unit"),
+						rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
+						rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
+
+				Object obj = rs.getObject("Total_Quantity");
+				int tq = 0;
+
+				if (obj != null) {
+					if (obj instanceof Number) {
+						tq = ((Number) obj).intValue();
+					} else {
+						tq = Integer.parseInt(obj.toString());
+					}
+				}
+
+				m.setTotalQuantity(tq);
+				table.getItems().add(m);
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+			}
 		}
 	}
 
-	public static void loadNeverSoldMedicines(TableView<Medicine> table) {
+	public static void loadNeverSoldMedicines(TableView<Medicine> table) { // Query 12
 		table.getItems().clear();
 
 		String sql = "SELECT m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "       m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
-				+ "       IFNULL(SUM(b.Quantity),0) AS Total_Quantity " + "FROM Medicine m "
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name AS Category_Name, "
+				+ "SUM(b.Quantity) AS Total_Quantity " + "FROM Medicine m "
 				+ "JOIN Category c ON m.Category_ID = c.Category_ID "
 				+ "LEFT JOIN Batch b ON b.Medicine_ID = m.Medicine_ID " + "WHERE NOT EXISTS ( "
-				+ "    SELECT 1 FROM Sale_Item si WHERE si.Medicine_ID = m.Medicine_ID " + ") "
+				+ "SELECT 1 FROM Sale_Item si WHERE si.Medicine_ID = m.Medicine_ID " + ") "
 				+ "GROUP BY m.Medicine_ID, m.Trade_Name, m.Unit, m.Reorder_Level, "
-				+ "         m.Selling_Price, m.Requires_Prescription, c.Name " + "ORDER BY m.Trade_Name";
+				+ "m.Selling_Price, m.Requires_Prescription, c.Name " + "ORDER BY m.Trade_Name";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
-
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-
-				while (rs.next()) {
-					Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"),
-							rs.getString("Unit"), rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
-							rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
-					m.setTotalQuantity(rs.getInt("Total_Quantity"));
-					table.getItems().add(m);
-				}
 			}
 
-			if (table.getItems().isEmpty()) {
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
 
+			while (rs.next()) {
+				Medicine m = new Medicine(rs.getInt("Medicine_ID"), rs.getString("Trade_Name"), rs.getString("Unit"),
+						rs.getInt("Reorder_Level"), rs.getDouble("Selling_Price"),
+						rs.getBoolean("Requires_Prescription"), rs.getString("Category_Name"));
+
+				Object obj = rs.getObject("Total_Quantity");
+				int tq = 0;
+
+				if (obj != null) {
+					if (obj instanceof Number) {
+						tq = ((Number) obj).intValue();
+					} else {
+						tq = Integer.parseInt(obj.toString());
+					}
+				}
+
+				m.setTotalQuantity(tq);
+				table.getItems().add(m);
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
-
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception e) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+			}
 		}
 	}
 

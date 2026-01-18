@@ -292,53 +292,56 @@ public class FXForSale {
 		root.setStyle("-fx-background-color: #f1faee;");
 
 		btnDelete.setOnAction(e -> {
+
+			Connection conn = null;
+
 			try {
 				int saleId = Integer.parseInt(tfId.getText().trim());
 
-				Connection conn = DBConnection.getConnection();
-
-				PreparedStatement ch1 = conn
-						.prepareStatement("SELECT COUNT(*) AS cnt FROM Sale_Item WHERE Sale_ID = ?");
-				ch1.setInt(1, saleId);
-				ResultSet rs1 = ch1.executeQuery();
-				rs1.next();
-				int itemCnt = rs1.getInt("cnt");
-				rs1.close();
-				ch1.close();
-
-				if (itemCnt > 0) {
-					conn.close();
-					showError("Cannot delete: Sale has Sale Items (" + itemCnt + ").");
+				conn = DBConnection.getConnection();
+				if (conn == null) {
+					showError("Connection failed.");
 					return;
 				}
 
-				PreparedStatement ch2 = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM Payment WHERE Sale_ID = ?");
-				ch2.setInt(1, saleId);
-				ResultSet rs2 = ch2.executeQuery();
-				rs2.next();
-				int payCnt = rs2.getInt("cnt");
-				rs2.close();
-				ch2.close();
+				PreparedStatement check = conn.prepareStatement("SELECT 1 FROM Sale WHERE Sale_ID = ?");
+				check.setInt(1, saleId);
+				ResultSet rs = check.executeQuery();
 
-				if (payCnt > 0) {
-					conn.close();
-					showError("Cannot delete: Sale has Payments (" + payCnt + ").");
+				if (!rs.next()) {
+					rs.close();
+					check.close();
+					showError("No sale found with this ID.");
 					return;
 				}
 
-				PreparedStatement ps = conn.prepareStatement("DELETE FROM Sale WHERE Sale_ID = ?");
-				ps.setInt(1, saleId);
+				rs.close();
+				check.close();
 
-				int rows = ps.executeUpdate();
-				ps.close();
+				PreparedStatement delPay = conn.prepareStatement("DELETE FROM Payment WHERE Sale_ID = ?");
+				delPay.setInt(1, saleId);
+				delPay.executeUpdate();
+				delPay.close();
+
+				PreparedStatement delItems = conn.prepareStatement("DELETE FROM Sale_Item WHERE Sale_ID = ?");
+				delItems.setInt(1, saleId);
+				delItems.executeUpdate();
+				delItems.close();
+
+				PreparedStatement delSale = conn.prepareStatement("DELETE FROM Sale WHERE Sale_ID = ?");
+				delSale.setInt(1, saleId);
+				int rows = delSale.executeUpdate();
+				delSale.close();
+
 				conn.close();
+				conn = null;
 
 				if (rows > 0) {
 					showInfo("Sale deleted successfully.");
 					SaleMng.loadAllSales(table);
 					stage.close();
 				} else {
-					showError("No sale found with this ID.");
+					showError("Delete failed.");
 				}
 
 			} catch (NumberFormatException ex) {
@@ -346,6 +349,12 @@ public class FXForSale {
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				showError("Unexpected error: " + ex.getMessage());
+			} finally {
+				try {
+					if (conn != null)
+						conn.close();
+				} catch (Exception ex) {
+				}
 			}
 		});
 
@@ -618,7 +627,5 @@ public class FXForSale {
 		stage.setScene(new Scene(root, 360, 170));
 		stage.showAndWait();
 	}
-	
-	
 
 }

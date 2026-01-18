@@ -124,47 +124,97 @@ public class FXForBatch {
 
 		VBox root = new VBox(15, grid, actions);
 		root.setPadding(new Insets(15));
+		root.setStyle("-fx-background-color:#f1faee;");
 
 		btnDelete.setOnAction(e -> {
+
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+
 			try {
-				int id = Integer.parseInt(tfId.getText().trim());
-				Connection conn = DBConnection.getConnection();
-
-				PreparedStatement chk = conn
-						.prepareStatement("SELECT COUNT(*) AS cnt FROM Sale_Item WHERE Batch_ID = ?");
-				chk.setInt(1, id);
-				ResultSet rs = chk.executeQuery();
-				rs.next();
-				int usedCount = rs.getInt("cnt");
-				rs.close();
-				chk.close();
-
-				if (usedCount > 0) {
-					conn.close();
-					showError("Cannot delete batch: used in sales (" + usedCount + ").");
+				String text = tfId.getText();
+				if (text == null || text.trim().isEmpty()) {
+					showError("Please enter a Batch ID.");
 					return;
 				}
 
-				PreparedStatement ps = conn.prepareStatement("DELETE FROM Batch WHERE Batch_ID = ?");
-				ps.setInt(1, id);
+				int id = Integer.parseInt(text.trim());
 
+				conn = DBConnection.getConnection();
+				if (conn == null) {
+					showError("Cannot connect to the database right now. Please try again.");
+					return;
+				}
+
+				// 1) هل الباتش موجود؟
+				ps = conn.prepareStatement("SELECT 1 FROM Batch WHERE Batch_ID = ?");
+				ps.setInt(1, id);
+				rs = ps.executeQuery();
+				if (!rs.next()) {
+					showInfo("No batch found with ID = " + id + ".");
+					return;
+				}
+				rs.close();
+				ps.close();
+
+				// 2) هل مستخدم في Sale_Item؟
+				ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM Sale_Item WHERE Batch_ID = ?");
+				ps.setInt(1, id);
+				rs = ps.executeQuery();
+				rs.next();
+				int usedCount = rs.getInt("cnt");
+				rs.close();
+				ps.close();
+
+				if (usedCount > 0) {
+					showError("Sorry, this batch cannot be deleted.\n\n" + "It is used in sales (" + usedCount
+							+ " record(s)).\n" + "Reason: Deleting it would break the foreign key relationship.");
+					return;
+				}
+
+				Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+						"Are you sure you want to delete Batch ID = " + id + " ?", ButtonType.YES, ButtonType.NO);
+				confirm.setHeaderText(null);
+
+				ButtonType res = confirm.showAndWait().orElse(ButtonType.NO);
+				if (res != ButtonType.YES)
+					return;
+
+				ps = conn.prepareStatement("DELETE FROM Batch WHERE Batch_ID = ?");
+				ps.setInt(1, id);
 				int rows = ps.executeUpdate();
 				ps.close();
-				conn.close();
 
 				if (rows > 0) {
 					showInfo("Batch deleted successfully.");
 					BatchMng.loadAllBatches(table);
 					stage.close();
 				} else {
-					showError("No batch found with this ID.");
+					showError("Delete failed. Please try again.");
 				}
 
 			} catch (NumberFormatException ex) {
-				showError("Batch ID must be a number.");
+				showError("Batch ID must be a valid number.");
 			} catch (Exception ex) {
 				ex.printStackTrace();
-				showError("Unexpected error: " + ex.getMessage());
+				showError("Unexpected error happened.\nDetails: " + ex.getMessage());
+			} finally {
+				try {
+					if (rs != null)
+						rs.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (ps != null)
+						ps.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (conn != null)
+						conn.close();
+				} catch (Exception ex) {
+				}
 			}
 		});
 

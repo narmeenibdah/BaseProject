@@ -17,93 +17,109 @@ public class PurchaseOrderMng {
 
 	public static Parent getView() {
 
-	    TableView<PurchaseOrder> table = new TableView<>();
+		TableView<PurchaseOrder> table = new TableView<>();
 
-	    TableColumn<PurchaseOrder, Integer> idCol = new TableColumn<>("PO ID");
-	    idCol.setCellValueFactory(new PropertyValueFactory<>("poId"));
+		TableColumn<PurchaseOrder, Integer> idCol = new TableColumn<>("PO ID");
+		idCol.setCellValueFactory(new PropertyValueFactory<>("poId"));
 
-	    TableColumn<PurchaseOrder, String> dateCol = new TableColumn<>("Date");
-	    dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
+		TableColumn<PurchaseOrder, String> dateCol = new TableColumn<>("Date");
+		dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
 
-	    TableColumn<PurchaseOrder, Double> totalCol = new TableColumn<>("Total Amount");
-	    totalCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+		TableColumn<PurchaseOrder, Double> totalCol = new TableColumn<>("Total Amount");
+		totalCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
 
-	    TableColumn<PurchaseOrder, String> statusCol = new TableColumn<>("Status");
-	    statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+		TableColumn<PurchaseOrder, String> statusCol = new TableColumn<>("Status");
+		statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-	    TableColumn<PurchaseOrder, String> supplierCol = new TableColumn<>("Supplier");
-	    supplierCol.setCellValueFactory(new PropertyValueFactory<>("supplierName"));
+		TableColumn<PurchaseOrder, String> supplierCol = new TableColumn<>("Supplier");
+		supplierCol.setCellValueFactory(new PropertyValueFactory<>("supplierName"));
 
-	    table.getColumns().addAll(idCol, dateCol, totalCol, statusCol, supplierCol);
-	    table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+		table.getColumns().addAll(idCol, dateCol, totalCol, statusCol, supplierCol);
+		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-	    Label title = new Label("Purchase Orders Details");
-	    title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+		Label title = new Label("Purchase Orders Details");
+		title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
 
-	    Button btnLoad = new Button("Load Purchase Orders ");
-	    btnLoad.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
-	    btnLoad.setOnAction(e -> loadPurchOrder(table));
+		Button btnLoad = new Button("Load Purchase Orders ");
+		btnLoad.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
+		btnLoad.setOnAction(e -> loadPurchOrder(table));
 
-	    Button btnAdd = new Button("Add");
-	    Button btnUpdate = new Button("Update");
-	    Button btnDelete = new Button("Delete");
-	    Button btnSearch = new Button("Search");
+		Button btnAdd = new Button("Add");
+		Button btnUpdate = new Button("Update");
+		Button btnDelete = new Button("Delete");
+		Button btnSearch = new Button("Search");
 
-	    btnAdd.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
-	    btnUpdate.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
-	    btnDelete.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
-	    btnSearch.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
+		btnAdd.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
+		btnUpdate.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
+		btnDelete.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
+		btnSearch.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
 
-	    HBox buttonsBox = new HBox(10, btnAdd, btnUpdate, btnDelete, btnSearch,btnLoad);
-	    buttonsBox.setAlignment(Pos.CENTER);
-	    buttonsBox.setPadding(new Insets(10));
+		HBox buttonsBox = new HBox(10, btnAdd, btnUpdate, btnDelete, btnSearch, btnLoad);
+		buttonsBox.setAlignment(Pos.CENTER);
+		buttonsBox.setPadding(new Insets(10));
 
-	    FXForPurchaseOrder fx = new FXForPurchaseOrder();
+		FXForPurchaseOrder fx = new FXForPurchaseOrder();
 
-	    btnAdd.setOnAction(e -> fx.addPurchaseOrder(table));
-	    btnUpdate.setOnAction(e -> fx.updatePurchaseOrder(table));
-	    btnDelete.setOnAction(e -> fx.deletePurchaseOrder(table));
-	    btnSearch.setOnAction(e -> fx.searchPurchaseOrder(table));
+		btnAdd.setOnAction(e -> fx.addPurchaseOrder(table));
+		btnUpdate.setOnAction(e -> fx.updatePurchaseOrder(table));
+		btnDelete.setOnAction(e -> fx.deletePurchaseOrder(table));
+		btnSearch.setOnAction(e -> fx.searchPurchaseOrder(table));
 
+		VBox root = new VBox(15, title, buttonsBox, table);
+		root.setPadding(new Insets(15));
+		root.setAlignment(Pos.TOP_CENTER);
+		root.setStyle("-fx-background-color:#d8f3dc;");
 
-	    VBox root = new VBox(15, title,  buttonsBox, table);
-	    root.setPadding(new Insets(15));
-	    root.setAlignment(Pos.TOP_CENTER);
-	    root.setStyle("-fx-background-color:#d8f3dc;");
-
-	    loadPurchOrder(table); 
-	    return root;
+		loadPurchOrder(table);
+		return root;
 	}
 
-    public static void loadPurchOrder(TableView<PurchaseOrder> table) {
-        table.getItems().clear();
+	public static void loadPurchOrder(TableView<PurchaseOrder> table) {// 6
+		table.getItems().clear();
 
-        String sql =
-            "SELECT po.PO_ID, po.Date, po.Total_Amount, po.Status, s.Name AS Supplier_Name " +
-            "FROM Purchase_Order po " +
-            "JOIN Supplier s ON po.Supplier_ID = s.Supplier_ID " +
-            "ORDER BY po.Date DESC";
+		String sql = "SELECT po.PO_ID, po.Date, po.Total_Amount, po.Status, s.Name AS Supplier_Name "
+				+ "FROM Purchase_Order po " + "JOIN Supplier s ON po.Supplier_ID = s.Supplier_ID "
+				+ "ORDER BY po.Date DESC";
 
-        try (Connection conn = DBConnection.getConnection()) {
-            if (conn == null) return;
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-            try (PreparedStatement ps = conn.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
+				return;
+			}
 
-                while (rs.next()) {
-                    PurchaseOrder po = new PurchaseOrder(
-                        rs.getInt("PO_ID"),
-                        rs.getString("Date"),
-                        rs.getDouble("Total_Amount"),
-                        rs.getString("Status"),
-                        rs.getString("Supplier_Name")
-                    );
-                    table.getItems().add(po);
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, "Failed to load Purchase Orders (Query 6).").show();
-        }
-    }
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				PurchaseOrder po = new PurchaseOrder(rs.getInt("PO_ID"), rs.getString("Date"),
+						rs.getDouble("Total_Amount"), rs.getString("Status"), rs.getString("Supplier_Name"));
+				table.getItems().add(po);
+			}
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			new Alert(Alert.AlertType.ERROR, "Failed to load Purchase Orders (Query 6).").show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
+		}
+	}
+
 }

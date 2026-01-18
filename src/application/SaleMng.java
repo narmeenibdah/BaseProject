@@ -81,24 +81,51 @@ public class SaleMng {
 		return root;
 	}
 
-	public static void loadAllSales(TableView<Sale> table) {
+	public static void loadAllSales(TableView<Sale> table) {// 8
 		table.getItems().clear();
 
-		String sql = "SELECT Sale_ID, Sale_Date, Total_Amount, Branch_ID, Employee_ID, Customer_ID FROM Sale ORDER BY Sale_Date DESC";
+		String sql = "SELECT Sale_ID, Sale_Date, Total_Amount, Branch_ID, Employee_ID, Customer_ID "
+				+ "FROM Sale ORDER BY Sale_Date DESC";
 
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement ps = conn.prepareStatement(sql);
-				ResultSet rs = ps.executeQuery()) {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
+				return;
+			}
+
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
 
 			while (rs.next()) {
-				table.getItems()
-						.add(new Sale(rs.getInt("Sale_ID"), rs.getString("Sale_Date"), rs.getDouble("Total_Amount"),
-								rs.getInt("Branch_ID"), rs.getInt("Employee_ID"), rs.getInt("Customer_ID")));
+				Sale s = new Sale(rs.getInt("Sale_ID"), rs.getString("Sale_Date"), rs.getDouble("Total_Amount"),
+						rs.getInt("Branch_ID"), rs.getInt("Employee_ID"), rs.getInt("Customer_ID"));
+				table.getItems().add(s);
 			}
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			new Alert(Alert.AlertType.ERROR, "Failed to load sales.").show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
 	}
+
 }

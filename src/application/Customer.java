@@ -2,37 +2,37 @@ package application;
 
 public class Customer {
 
-    private int customerId;
-    private String name;
-    private int numberOfPurchases;
+	private int customerId;
+	private String name;
+	private int numberOfPurchases;
 
-    public Customer(int customerId, String name, int numberOfPurchases) {
-        this.customerId = customerId;
-        this.name = name;
-        this.numberOfPurchases = numberOfPurchases;
-    }
+	public Customer(int customerId, String name, int numberOfPurchases) {
+		this.customerId = customerId;
+		this.name = name;
+		this.numberOfPurchases = numberOfPurchases;
+	}
 
-    public int getCustomerId() {
-        return customerId;
-    }
+	public int getCustomerId() {
+		return customerId;
+	}
 
-    public void setCustomerId(int customerId) {
-        this.customerId = customerId;
-    }
+	public void setCustomerId(int customerId) {
+		this.customerId = customerId;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public int getNumberOfPurchases() {
-        return numberOfPurchases;
-    }
+	public int getNumberOfPurchases() {
+		return numberOfPurchases;
+	}
 
-    public void setNumberOfPurchases(int numberOfPurchases) {
-        this.numberOfPurchases = numberOfPurchases;
-    }
+	public void setNumberOfPurchases(int numberOfPurchases) {
+		this.numberOfPurchases = numberOfPurchases;
+	}
 }

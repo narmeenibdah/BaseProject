@@ -101,27 +101,49 @@ public class BatchMng {
 				+ "JOIN Medicine m ON b.Medicine_ID = m.Medicine_ID "
 				+ "JOIN Warehouse w ON b.Warehouse_ID = w.Warehouse_ID " + "ORDER BY b.Batch_ID";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
+			}
 
-			try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+			ps = conn.prepareStatement(sql);
+			rs = ps.executeQuery();
 
-				while (rs.next()) {
-					Batch b = new Batch(rs.getInt("Batch_ID"), rs.getString("Batch_Number"),
-							rs.getString("Expiry_Date"), rs.getInt("Quantity"), rs.getDouble("Cost"),
-							rs.getString("Medicine_Name"), rs.getString("Warehouse_Name"));
-					table.getItems().add(b);
-				}
+			while (rs.next()) {
+				Batch b = new Batch(rs.getInt("Batch_ID"), rs.getString("Batch_Number"), rs.getString("Expiry_Date"),
+						rs.getInt("Quantity"), rs.getDouble("Cost"), rs.getString("Medicine_Name"),
+						rs.getString("Warehouse_Name"));
+				table.getItems().add(b);
 			}
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			new Alert(Alert.AlertType.ERROR, "Failed to load all batches.").show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
 	}
 
-	public static void loadExpiringBatches(TableView<Batch> table) {
+	public static void loadExpiringBatches(TableView<Batch> table) {// 3
 		table.getItems().clear();
 
 		String sql = "SELECT b.Batch_ID, b.Batch_Number, b.Expiry_Date, b.Quantity, b.Cost, "
@@ -130,33 +152,54 @@ public class BatchMng {
 				+ "JOIN Warehouse w ON b.Warehouse_ID = w.Warehouse_ID " + "WHERE b.Expiry_Date BETWEEN ? AND ? "
 				+ "ORDER BY b.Expiry_Date";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
+			}
 
 			LocalDate today = LocalDate.now();
 			LocalDate after60 = today.plusDays(60);
 
-			try (PreparedStatement ps = conn.prepareStatement(sql)) {
-				ps.setDate(1, java.sql.Date.valueOf(today));
-				ps.setDate(2, java.sql.Date.valueOf(after60));
+			ps = conn.prepareStatement(sql);
+			ps.setDate(1, java.sql.Date.valueOf(today));
+			ps.setDate(2, java.sql.Date.valueOf(after60));
 
-				try (ResultSet rs = ps.executeQuery()) {
-					while (rs.next()) {
-						Batch b = new Batch(rs.getInt("Batch_ID"), rs.getString("Batch_Number"),
-								rs.getString("Expiry_Date"), rs.getInt("Quantity"), rs.getDouble("Cost"),
-								rs.getString("Medicine_Name"), rs.getString("Warehouse_Name"));
-						table.getItems().add(b);
-					}
-				}
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				Batch b = new Batch(rs.getInt("Batch_ID"), rs.getString("Batch_Number"), rs.getString("Expiry_Date"),
+						rs.getInt("Quantity"), rs.getDouble("Cost"), rs.getString("Medicine_Name"),
+						rs.getString("Warehouse_Name"));
+				table.getItems().add(b);
 			}
+
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			new Alert(Alert.AlertType.ERROR, "Failed to load expiring batches.").show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
 	}
 
-	public static void loadExpiringBatchesWithDays(TableView<Batch> table) {
+	public static void loadExpiringBatchesWithDays(TableView<Batch> table) {// 19
 		table.getItems().clear();
 
 		String sql = "SELECT b.Batch_ID, b.Batch_Number, b.Expiry_Date, b.Quantity, b.Cost, "
@@ -165,37 +208,55 @@ public class BatchMng {
 				+ "JOIN Warehouse w ON b.Warehouse_ID = w.Warehouse_ID " + "WHERE b.Expiry_Date BETWEEN ? AND ? "
 				+ "ORDER BY b.Expiry_Date";
 
-		try (Connection conn = DBConnection.getConnection()) {
-			if (conn == null)
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = DBConnection.getConnection();
+			if (conn == null) {
 				return;
+			}
 
 			LocalDate today = LocalDate.now();
 			LocalDate after60 = today.plusDays(60);
 
-			try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			ps = conn.prepareStatement(sql);
+			ps.setDate(1, java.sql.Date.valueOf(today));
+			ps.setDate(2, java.sql.Date.valueOf(after60));
 
-				ps.setDate(1, java.sql.Date.valueOf(today));
-				ps.setDate(2, java.sql.Date.valueOf(after60));
+			rs = ps.executeQuery();
+			while (rs.next()) {
 
-				try (ResultSet rs = ps.executeQuery()) {
+				LocalDate expDate = rs.getDate("Expiry_Date").toLocalDate();
+				int daysRemaining = (int) ChronoUnit.DAYS.between(today, expDate);
 
-					while (rs.next()) {
+				Batch b = new Batch(rs.getInt("Batch_ID"), rs.getString("Batch_Number"), rs.getString("Expiry_Date"),
+						rs.getInt("Quantity"), rs.getDouble("Cost"), rs.getString("Medicine_Name"),
+						rs.getString("Warehouse_Name"), daysRemaining);
 
-						LocalDate expDate = rs.getDate("Expiry_Date").toLocalDate();
-						int daysRemaining = (int) ChronoUnit.DAYS.between(today, expDate);
-
-						Batch b = new Batch(rs.getInt("Batch_ID"), rs.getString("Batch_Number"),
-								rs.getString("Expiry_Date"), rs.getInt("Quantity"), rs.getDouble("Cost"),
-								rs.getString("Medicine_Name"), rs.getString("Warehouse_Name"), daysRemaining);
-
-						table.getItems().add(b);
-					}
-				}
+				table.getItems().add(b);
 			}
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			new Alert(Alert.AlertType.ERROR, "Failed to load expiring batches with days remaining.").show();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ex) {
+			}
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Exception ex) {
+			}
 		}
 	}
 

@@ -13,92 +13,107 @@ import javafx.scene.layout.*;
 
 public class PurchaseOrderItemsMng {
 
-    public static Parent getView() {
+	public static Parent getView() {
 
-        Label title = new Label("Purchase Order Items");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+		Label title = new Label("Purchase Order Items");
+		title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
-        Label lblPo = new Label("Purchase Order ID (PO_ID):");
-        TextField tfPo = new TextField();
-        tfPo.setPrefWidth(120);
+		Label lblPo = new Label("Purchase Order ID (PO_ID):");
+		TextField tfPo = new TextField();
+		tfPo.setPrefWidth(120);
 
-        Button btnShow = new Button("Show Items");
-        btnShow.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
+		Button btnShow = new Button("Show Items");
+		btnShow.setStyle("-fx-background-color:#52b788; -fx-text-fill:white; -fx-font-weight:bold;");
 
-        HBox top = new HBox(10, lblPo, tfPo, btnShow);
-        top.setAlignment(Pos.CENTER_LEFT);
+		HBox top = new HBox(10, lblPo, tfPo, btnShow);
+		top.setAlignment(Pos.CENTER_LEFT);
 
-        TableView<PurchaseOrderItemView> table = new TableView<>();
+		TableView<PurchaseOrderItemView> table = new TableView<>();
 
-        TableColumn<PurchaseOrderItemView, Integer> poCol = new TableColumn<>("PO ID");
-        poCol.setCellValueFactory(new PropertyValueFactory<>("poId"));
+		TableColumn<PurchaseOrderItemView, Integer> poCol = new TableColumn<>("PO ID");
+		poCol.setCellValueFactory(new PropertyValueFactory<>("poId"));
 
-        TableColumn<PurchaseOrderItemView, Integer> medIdCol = new TableColumn<>("Medicine ID");
-        medIdCol.setCellValueFactory(new PropertyValueFactory<>("medicineId"));
+		TableColumn<PurchaseOrderItemView, Integer> medIdCol = new TableColumn<>("Medicine ID");
+		medIdCol.setCellValueFactory(new PropertyValueFactory<>("medicineId"));
 
-        TableColumn<PurchaseOrderItemView, String> medNameCol = new TableColumn<>("Medicine Name");
-        medNameCol.setCellValueFactory(new PropertyValueFactory<>("medicineName"));
+		TableColumn<PurchaseOrderItemView, String> medNameCol = new TableColumn<>("Medicine Name");
+		medNameCol.setCellValueFactory(new PropertyValueFactory<>("medicineName"));
 
-        TableColumn<PurchaseOrderItemView, Integer> qtyCol = new TableColumn<>("Quantity");
-        qtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+		TableColumn<PurchaseOrderItemView, Integer> qtyCol = new TableColumn<>("Quantity");
+		qtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
-        TableColumn<PurchaseOrderItemView, Double> priceCol = new TableColumn<>("Unit Price");
-        priceCol.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+		TableColumn<PurchaseOrderItemView, Double> priceCol = new TableColumn<>("Unit Price");
+		priceCol.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
 
-        table.getColumns().addAll(poCol, medIdCol, medNameCol, qtyCol, priceCol);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+		table.getColumns().addAll(poCol, medIdCol, medNameCol, qtyCol, priceCol);
+		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        btnShow.setOnAction(e -> {
-            table.getItems().clear();
+		btnShow.setOnAction(e -> {
+			table.getItems().clear();
 
-            int poId;
-            try {
-                poId = Integer.parseInt(tfPo.getText().trim());
-            } catch (NumberFormatException ex) {
-                new Alert(Alert.AlertType.ERROR, "PO_ID must be a valid number.").show();
-                return;
-            }
+			int poId;
+			try {
+				poId = Integer.parseInt(tfPo.getText().trim());
+			} catch (NumberFormatException ex) {
+				new Alert(Alert.AlertType.ERROR, "PO_ID must be a valid number.").show();
+				return;
+			}
 
-            String sql =
-                "SELECT poi.PO_ID, m.Medicine_ID, m.Trade_Name AS Medicine_Name, " +
-                "       poi.Quantity, poi.Unit_Price " +
-                "FROM Purchase_Order_Item poi " +
-                "JOIN Medicine m ON poi.Medicine_ID = m.Medicine_ID " +
-                "WHERE poi.PO_ID = ?";
+			String sql = "SELECT poi.PO_ID, m.Medicine_ID, m.Trade_Name AS Medicine_Name, "
+					+ "       poi.Quantity, poi.Unit_Price " + "FROM Purchase_Order_Item poi "
+					+ "JOIN Medicine m ON poi.Medicine_ID = m.Medicine_ID " + "WHERE poi.PO_ID = ?";
 
-            try (Connection conn = DBConnection.getConnection()) {
-                if (conn == null) return;
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs = null;
 
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    ps.setInt(1, poId);
+			try {
+				conn = DBConnection.getConnection();
+				if (conn == null) {
+					return;
+				}
 
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            table.getItems().add(new PurchaseOrderItemView(
-                                rs.getInt("PO_ID"),
-                                rs.getInt("Medicine_ID"),
-                                rs.getString("Medicine_Name"),
-                                rs.getInt("Quantity"),
-                                rs.getDouble("Unit_Price")
-                            ));
-                        }
-                    }
-                }
+				ps = conn.prepareStatement(sql);
+				ps.setInt(1, poId);
 
-                if (table.getItems().isEmpty()) {
-                    new Alert(Alert.AlertType.INFORMATION, "No items found for this Purchase Order.").show();
-                }
+				rs = ps.executeQuery();
+				while (rs.next()) {
+					PurchaseOrderItemView row = new PurchaseOrderItemView(rs.getInt("PO_ID"), rs.getInt("Medicine_ID"),
+							rs.getString("Medicine_Name"), rs.getInt("Quantity"), rs.getDouble("Unit_Price"));
+					table.getItems().add(row);
+				}
 
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                new Alert(Alert.AlertType.ERROR, "Failed to load purchase order items.").show();
-            }
-        });
+				if (table.getItems().isEmpty()) {
+					new Alert(Alert.AlertType.INFORMATION, "No items found for this Purchase Order.").show();
+				}
 
-        VBox root = new VBox(15, title, top, table);
-        root.setPadding(new Insets(15));
-        root.setStyle("-fx-background-color:#d8f3dc;");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				new Alert(Alert.AlertType.ERROR, "Failed to load purchase order items.").show();
+			} finally {
+				try {
+					if (rs != null)
+						rs.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (ps != null)
+						ps.close();
+				} catch (Exception ex) {
+				}
+				try {
+					if (conn != null)
+						conn.close();
+				} catch (Exception ex) {
+				}
+			}
 
-        return root;
-    }
+		});
+
+		VBox root = new VBox(15, title, top, table);
+		root.setPadding(new Insets(15));
+		root.setStyle("-fx-background-color:#d8f3dc;");
+
+		return root;
+	}
 }
